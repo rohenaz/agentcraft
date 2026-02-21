@@ -35,6 +35,7 @@ export interface UISlotMap {
   error?: string;
   pageChange?: string; // tab/group navigation
   toggle?: string;     // expand/collapse sidebar items
+  confirm?: string;    // sound assigned, settings saved
 }
 
 export interface SoundAssignments {

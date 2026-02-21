@@ -8,7 +8,7 @@ import { SoundBrowserPanel } from '@/components/sound-browser-panel';
 import { AssignmentLogPanel } from '@/components/assignment-log-panel';
 import { SoundUnit } from '@/components/sound-unit';
 import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent, UITheme, UISlotMap, SelectMode } from '@/lib/types';
-import { setUITheme, initGlobalUIListeners } from '@/lib/ui-audio';
+import { setUITheme, initGlobalUIListeners, playUISound } from '@/lib/ui-audio';
 import { UISoundsModal } from '@/components/ui-sounds-modal';
 
 const DEFAULT_ASSIGNMENTS: SoundAssignments = {
@@ -90,6 +90,7 @@ export default function Page() {
       body: JSON.stringify(assignments),
     });
     setIsDirty(false);
+    playUISound('confirm', 0.5);
   }, [assignments]);
 
   const handleToggleEnabled = useCallback(() => {
@@ -117,6 +118,7 @@ export default function Page() {
   // Called from SoundBrowserPanel when in select mode and user clicks a sound card
   const handleSelectModeAssign = useCallback((soundPath: string) => {
     if (!selectMode) return;
+    playUISound('confirm', 0.5);
     const { scope, event } = selectMode;
     if (scope === 'global') {
       handleAssignmentChange({ ...assignments, global: { ...assignments.global, [event]: soundPath } });
@@ -192,6 +194,7 @@ export default function Page() {
     const hookEvent = dropId.slice(lastColon + 1) as HookEvent;
 
     if (!scope || !hookEvent) return;
+    playUISound('confirm', 0.5);
 
     if (scope === 'global') {
       handleAssignmentChange({ ...assignments, global: { ...assignments.global, [hookEvent]: soundPath } });
