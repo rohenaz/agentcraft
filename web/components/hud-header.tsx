@@ -3,9 +3,17 @@
 interface HudHeaderProps {
   enabled: boolean;
   onToggle: () => void;
+  uiTheme: 'sc2' | 'wc3' | 'off';
+  onUiThemeChange: (theme: 'sc2' | 'wc3' | 'off') => void;
 }
 
-export function HudHeader({ enabled, onToggle }: HudHeaderProps) {
+const UI_THEMES: { value: 'sc2' | 'wc3' | 'off'; label: string }[] = [
+  { value: 'sc2', label: 'SC2' },
+  { value: 'wc3', label: 'WC3' },
+  { value: 'off', label: 'OFF' },
+];
+
+export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange }: HudHeaderProps) {
   return (
     <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
       <div className="flex items-center gap-4">
@@ -18,6 +26,28 @@ export function HudHeader({ enabled, onToggle }: HudHeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* UI sound theme picker */}
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] tracking-widest uppercase opacity-40 mr-1">UI SFX</span>
+          {UI_THEMES.map((t) => (
+            <button
+              key={t.value}
+              onClick={() => onUiThemeChange(t.value)}
+              className="px-2 py-0.5 text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
+              style={{
+                border: `1px solid ${uiTheme === t.value ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+                color: uiTheme === t.value ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.35)',
+                backgroundColor: uiTheme === t.value ? 'rgba(0,229,255,0.08)' : 'transparent',
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+
+        {/* Master enable/disable */}
         <button
           onClick={onToggle}
           className="flex items-center gap-2 px-4 py-1 text-xs sf-heading font-semibold uppercase tracking-wider transition-all"

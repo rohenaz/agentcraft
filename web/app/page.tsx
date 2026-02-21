@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { DndContext, DragEndEvent, DragStartEvent, DragOverlay, MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { HudHeader } from '@/components/hud-header';
 import { AgentRosterPanel } from '@/components/agent-roster-panel';
@@ -8,12 +8,13 @@ import { SoundBrowserPanel } from '@/components/sound-browser-panel';
 import { AssignmentLogPanel } from '@/components/assignment-log-panel';
 import { SoundUnit } from '@/components/sound-unit';
 import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent } from '@/lib/types';
+import { setUITheme, initGlobalUIListeners } from '@/lib/ui-audio';
 
 const DEFAULT_ASSIGNMENTS: SoundAssignments = {
   global: {},
   agents: {},
   skills: {},
-  settings: { masterVolume: 1.0, enabled: true, theme: 'terran' },
+  settings: { masterVolume: 1.0, enabled: true, theme: 'terran', uiTheme: 'sc2' },
 };
 
 export default function Page() {
@@ -23,6 +24,7 @@ export default function Page() {
   const [assignments, setAssignments] = useState<SoundAssignments>(DEFAULT_ASSIGNMENTS);
   const [isDirty, setIsDirty] = useState(false);
   const [activeSound, setActiveSound] = useState<SoundAsset | null>(null);
+  const cleanupUIRef = useRef<(() => void) | null>(null);
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -36,8 +38,14 @@ export default function Page() {
   useEffect(() => {
     fetch('/api/sounds').then((r) => r.json()).then(setSounds).catch(console.error);
     fetch('/api/skills').then((r) => r.json()).then(setSkills).catch(console.error);
-    fetch('/api/assignments').then((r) => r.json()).then(setAssignments).catch(console.error);
+    fetch('/api/assignments').then((r) => r.json()).then((data: SoundAssignments) => {
+      setAssignments(data);
+      const theme = data.settings?.uiTheme ?? 'sc2';
+      setUITheme(theme);
+      cleanupUIRef.current = initGlobalUIListeners();
+    }).catch(console.error);
     fetchAgents();
+    return () => { cleanupUIRef.current?.(); };
   }, [fetchAgents]);
 
   const handleAssignmentChange = useCallback((next: SoundAssignments) => {
@@ -66,6 +74,14 @@ export default function Page() {
     handleAssignmentChange({
       ...assignments,
       settings: { ...assignments.settings, enabled: !assignments.settings.enabled },
+    });
+  }, [assignments, handleAssignmentChange]);
+
+  const handleUiThemeChange = useCallback((theme: 'sc2' | 'wc3' | 'off') => {
+    setUITheme(theme);
+    handleAssignmentChange({
+      ...assignments,
+      settings: { ...assignments.settings, uiTheme: theme },
     });
   }, [assignments, handleAssignmentChange]);
 
@@ -146,7 +162,7 @@ export default function Page() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen w-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--sf-bg)' }}>
-        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} />
+        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} />
         <div className="flex-1 grid overflow-hidden" style={{ gridTemplateColumns: '288px 1fr 320px' }}>
           <AgentRosterPanel
             assignments={assignments}

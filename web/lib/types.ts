@@ -29,6 +29,7 @@ export interface SoundAssignments {
     masterVolume: number;
     enabled: boolean;
     theme: 'terran' | 'protoss' | 'zerg';
+    uiTheme: 'sc2' | 'wc3' | 'off';
   };
 }
 
