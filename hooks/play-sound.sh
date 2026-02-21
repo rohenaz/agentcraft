@@ -3,8 +3,10 @@
 CONFIG="$HOME/.claude/sounds/assignments.json"
 LIBRARY="$HOME/code/claude-sounds"
 
-# timeout 2: prevents blocking if Claude Code doesn't close stdin (e.g. on crash)
-INPUT=$(timeout 2 cat 2>/dev/null || echo '{}')
+# Read stdin with 2s timeout. 'timeout' isn't available by default on macOS,
+# so use perl's alarm() which is always present.
+INPUT=$(perl -e '$SIG{ALRM}=sub{exit 0}; alarm 2; local $/; $d=<STDIN>; print $d if $d' 2>/dev/null)
+[ -z "$INPUT" ] && INPUT='{}'
 EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 AGENT=$(echo "$INPUT" | jq -r '.agent_type // empty')
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
