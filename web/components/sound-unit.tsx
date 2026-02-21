@@ -16,13 +16,15 @@ const BARS = 16;
 
 export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnitProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [bars, setBars] = useState<number[]>(sound.waveform.map(h => h / 10));
 
   const ctxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const rafRef = useRef<number | null>(null);
+  // Track whether a drag actually happened so we can suppress the click
+  const didDragRef = useRef(false);
 
-  // Reset bars when sound changes
   useEffect(() => {
     setBars(sound.waveform.map(h => h / 10));
   }, [sound.waveform]);
@@ -41,23 +43,23 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
     disabled: isOverlay,
   });
 
-  const handlePreview = async (e: React.MouseEvent) => {
-    e.stopPropagation();
+  // Track drag so we can suppress click-to-play after a drag
+  useEffect(() => {
+    if (isDragging) didDragRef.current = true;
+  }, [isDragging]);
 
-    // Stop if already playing
+  const playSound = useCallback(async () => {
     if (isPlaying) { stop(); return; }
-
     setIsPlaying(true);
 
     const ctx = new AudioContext();
     ctxRef.current = ctx;
 
     const analyser = ctx.createAnalyser();
-    analyser.fftSize = 256; // 128 frequency bins
+    analyser.fftSize = 256;
     analyser.smoothingTimeConstant = 0.6;
     analyser.connect(ctx.destination);
 
-    // Fetch audio and decode
     let audioBuffer: AudioBuffer;
     try {
       const res = await fetch(`/api/audio/${sound.path}`);
@@ -73,10 +75,8 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
     source.connect(analyser);
     source.start();
     sourceRef.current = source;
-
     source.onended = stop;
 
-    // Drive bars from real frequency data
     const freqData = new Uint8Array(analyser.frequencyBinCount);
     const binsPerBar = Math.floor(analyser.frequencyBinCount / BARS);
 
@@ -91,30 +91,74 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
       rafRef.current = requestAnimationFrame(draw);
     };
     draw();
-  };
+  }, [isPlaying, sound.path, stop]);
 
-  const overlayStyle = isOverlay ? {
-    backgroundColor: 'var(--sf-panel2)',
-    border: '1px solid var(--sf-cyan)',
-    boxShadow: '0 0 24px rgba(0,229,255,0.5), 0 0 8px rgba(0,229,255,0.3)',
-    opacity: 1,
-    cursor: 'grabbing',
-    transform: 'rotate(1.5deg) scale(1.04)',
-  } : {
-    backgroundColor: 'var(--sf-panel2)',
-    border: `1px solid ${isDragging ? 'var(--sf-cyan)' : isAssigned ? 'rgba(0,255,136,0.4)' : 'var(--sf-border)'}`,
-    opacity: isDragging ? 0.3 : 1,
-    boxShadow: isDragging ? '0 0 16px rgba(0,229,255,0.4)' : undefined,
-  };
+  const handleCardClick = useCallback(() => {
+    // If a drag just happened, suppress the click
+    if (didDragRef.current) {
+      didDragRef.current = false;
+      return;
+    }
+    playSound();
+  }, [playSound]);
+
+  if (isOverlay) {
+    return (
+      <div
+        className="sf-card relative flex flex-col gap-2 p-3"
+        style={{
+          backgroundColor: 'var(--sf-panel2)',
+          border: '1px solid var(--sf-cyan)',
+          boxShadow: '0 0 24px rgba(0,229,255,0.5), 0 0 8px rgba(0,229,255,0.3)',
+          opacity: 1,
+          cursor: 'grabbing',
+          transform: 'rotate(1.5deg) scale(1.04)',
+        }}
+      >
+        <div className="flex items-end gap-px h-5">
+          {bars.map((v, i) => (
+            <div
+              key={i}
+              className="flex-1"
+              style={{ height: `${v * 100}%`, backgroundColor: 'var(--sf-cyan)', minWidth: '2px' }}
+            />
+          ))}
+        </div>
+        <span className="text-[10px] opacity-70 truncate leading-tight">{formatSoundName(sound.filename)}</span>
+      </div>
+    );
+  }
+
+  const lit = isHovered || isPlaying;
 
   return (
     <div
-      ref={isOverlay ? undefined : setNodeRef}
-      className="sf-card relative flex flex-col gap-2 p-3 transition-all"
-      style={{ ...overlayStyle, cursor: isOverlay ? 'grabbing' : 'grab' }}
-      {...(isOverlay ? {} : { ...listeners, ...attributes })}
+      ref={setNodeRef}
+      // data-sf-hover: hover sound fires on enter
+      // data-no-ui-sound: suppress UI click sound (card click plays actual audio instead)
+      data-sf-hover
+      data-no-ui-sound
+      className="sf-card relative flex flex-col gap-2 p-3 transition-all select-none"
+      style={{
+        backgroundColor: lit ? 'rgba(0,229,255,0.06)' : 'var(--sf-panel2)',
+        border: `1px solid ${
+          isDragging ? 'var(--sf-cyan)'
+          : isPlaying ? 'var(--sf-cyan)'
+          : lit ? 'rgba(0,229,255,0.55)'
+          : isAssigned ? 'rgba(0,255,136,0.4)'
+          : 'var(--sf-border)'
+        }`,
+        opacity: isDragging ? 0.3 : 1,
+        boxShadow: isPlaying ? '0 0 8px rgba(0,229,255,0.2)' : isDragging ? '0 0 16px rgba(0,229,255,0.4)' : undefined,
+        cursor: isDragging ? 'grabbing' : 'pointer',
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleCardClick}
+      {...listeners}
+      {...attributes}
     >
-      {isAssigned && !isOverlay && (
+      {isAssigned && !isPlaying && (
         <div
           className="absolute top-2 right-2 w-1.5 h-1.5 rounded-full"
           style={{ backgroundColor: 'var(--sf-green)', boxShadow: '0 0 4px var(--sf-green)' }}
@@ -128,7 +172,7 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
             className="flex-1"
             style={{
               height: `${v * 100}%`,
-              backgroundColor: isOverlay || isPlaying ? 'var(--sf-cyan)' : 'rgba(0,229,255,0.35)',
+              backgroundColor: isPlaying ? 'var(--sf-cyan)' : lit ? 'rgba(0,229,255,0.55)' : 'rgba(0,229,255,0.3)',
               minWidth: '2px',
               transition: 'height 50ms linear',
             }}
@@ -137,17 +181,22 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
       </div>
 
       <div className="flex items-center justify-between gap-1">
-        <span className="text-[10px] opacity-70 truncate leading-tight" title={sound.filename}>
+        <span
+          className="text-[10px] truncate leading-tight"
+          style={{ color: lit ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.65)' }}
+          title={sound.filename}
+        >
           {formatSoundName(sound.filename)}
         </span>
-        {!isOverlay && (
+        {isPlaying && (
           <button
-            onClick={handlePreview}
+            onClick={(e) => { e.stopPropagation(); stop(); }}
             className="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] transition-all"
-            style={{ border: '1px solid var(--sf-border)', color: 'var(--sf-cyan)' }}
+            style={{ border: '1px solid var(--sf-cyan)', color: 'var(--sf-cyan)' }}
             onMouseDown={(e) => e.stopPropagation()}
+            data-no-ui-sound
           >
-            {isPlaying ? '\u25A0' : '\u25B6'}
+            &#x25A0;
           </button>
         )}
       </div>

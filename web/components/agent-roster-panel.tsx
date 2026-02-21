@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { HookSlot } from './hook-slot';
 import { AgentForm } from './agent-form';
+import { playUISound } from '@/lib/ui-audio';
 import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData } from '@/lib/types';
 
 const HOOK_GROUPS: { label: string; events: HookEvent[] }[] = [
@@ -37,17 +38,23 @@ interface AgentRowProps {
 
 function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete }: AgentRowProps) {
   const [expanded, setExpanded] = useState(!!isGlobal);
+  const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
 
   return (
     <div className="mb-1">
       <div
+        data-sf-hover
         className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all group"
         style={{
-          border: `1px solid ${isGlobal ? 'var(--sf-border-gold)' : 'var(--sf-border)'}`,
-          backgroundColor: isGlobal ? 'rgba(255,192,0,0.04)' : 'transparent',
+          border: `1px solid ${isGlobal ? 'var(--sf-border-gold)' : isHovered ? 'rgba(0,229,255,0.35)' : 'var(--sf-border)'}`,
+          backgroundColor: isGlobal
+            ? isHovered ? 'rgba(255,192,0,0.08)' : 'rgba(255,192,0,0.04)'
+            : isHovered ? 'rgba(0,229,255,0.04)' : 'transparent',
         }}
-        onClick={() => setExpanded(!expanded)}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => { playUISound('click'); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -131,15 +138,22 @@ interface SkillRowProps {
 
 function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview }: SkillRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
   const scope = `skill/${skill.qualifiedName}`;
 
   return (
     <div className="mb-1">
       <div
+        data-sf-hover
         className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all"
-        style={{ border: '1px solid rgba(0,168,255,0.2)', backgroundColor: 'rgba(0,168,255,0.03)' }}
-        onClick={() => setExpanded(!expanded)}
+        style={{
+          border: `1px solid ${isHovered ? 'rgba(0,168,255,0.4)' : 'rgba(0,168,255,0.2)'}`,
+          backgroundColor: isHovered ? 'rgba(0,168,255,0.07)' : 'rgba(0,168,255,0.03)',
+        }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => { playUISound('click'); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -400,13 +414,17 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
             <div key={ns} className="mb-1">
               {/* Namespace header */}
               <div
-                className="flex items-center justify-between px-2 py-1 cursor-pointer"
+                data-sf-hover
+                className="flex items-center justify-between px-2 py-1 cursor-pointer transition-all"
                 style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
-                onClick={() => setCollapsedNs(prev => {
-                  const next = new Set(prev);
-                  if (next.has(ns)) next.delete(ns); else next.add(ns);
-                  return next;
-                })}
+                onClick={() => {
+                  playUISound('click');
+                  setCollapsedNs(prev => {
+                    const next = new Set(prev);
+                    if (next.has(ns)) next.delete(ns); else next.add(ns);
+                    return next;
+                  });
+                }}
               >
                 <div className="flex items-center gap-1.5">
                   <span className="text-[9px] opacity-40">{isCollapsed ? '▸' : '▾'}</span>

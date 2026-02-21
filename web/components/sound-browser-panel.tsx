@@ -75,6 +75,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
           {allGroups.map((group) => (
             <button
               key={group}
+              data-sf-hover
               onClick={() => setActiveGroup(group)}
               className="shrink-0 px-3 py-1 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
               style={{
@@ -94,6 +95,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
             {groupCategories.map((cat) => (
               <button
                 key={cat}
+                data-sf-hover
                 onClick={() => setActiveCategory(cat)}
                 className="shrink-0 px-2 py-0.5 text-[9px] sf-heading font-medium uppercase tracking-wider transition-all"
                 style={{

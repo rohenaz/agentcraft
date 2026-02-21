@@ -5,7 +5,7 @@ type SoundName = 'click' | 'hover' | 'error';
 let audioCtx: AudioContext | null = null;
 const bufferCache = new Map<string, AudioBuffer | null>();
 let currentTheme = 'off';
-let lastHoveredBtn: Element | null = null;
+let lastHoveredEl: Element | null = null;
 let cleanupListeners: (() => void) | null = null;
 
 function getCtx(): AudioContext {
@@ -30,13 +30,16 @@ async function loadBuffer(url: string): Promise<AudioBuffer | null> {
 export async function setUITheme(theme: string): Promise<void> {
   currentTheme = theme;
   if (theme === 'off') return;
+  // Clear stale null entries so retry works after theme switch
+  bufferCache.delete(`/api/audio/ui/${theme}/click.mp3`);
+  bufferCache.delete(`/api/audio/ui/${theme}/hover.mp3`);
   await Promise.all([
     loadBuffer(`/api/audio/ui/${theme}/click.mp3`),
     loadBuffer(`/api/audio/ui/${theme}/hover.mp3`),
   ]);
 }
 
-export function playUISound(name: SoundName, volume = 0.25): void {
+export function playUISound(name: SoundName, volume = 0.3): void {
   if (currentTheme === 'off') return;
   const url = `/api/audio/ui/${currentTheme}/${name}.mp3`;
   const buf = bufferCache.get(url);
@@ -56,18 +59,24 @@ export function playUISound(name: SoundName, volume = 0.25): void {
 export function initGlobalUIListeners(): () => void {
   if (cleanupListeners) cleanupListeners();
 
+  // Click: fire on buttons and data-sf-hover elements, SKIP data-no-ui-sound
   function handleClick(e: MouseEvent) {
-    const btn = (e.target as Element).closest('button, [role="button"]');
-    if (btn) playUISound('click');
+    const target = e.target as Element;
+    if (target.closest('[data-no-ui-sound]')) return;
+    const el = target.closest('button, [role="button"], [data-sf-hover]');
+    if (el && !el.hasAttribute('data-no-ui-sound')) {
+      playUISound('click');
+    }
   }
 
+  // Hover: only fire on elements marked with data-sf-hover (container-level)
   function handleMouseover(e: MouseEvent) {
-    const btn = (e.target as Element).closest('button, [role="button"]');
-    if (btn && btn !== lastHoveredBtn) {
-      lastHoveredBtn = btn;
-      playUISound('hover', 0.15);
+    const el = (e.target as Element).closest('[data-sf-hover]');
+    if (el && el !== lastHoveredEl) {
+      lastHoveredEl = el;
+      playUISound('hover', 0.2);
     }
-    if (!btn) lastHoveredBtn = null;
+    if (!el) lastHoveredEl = null;
   }
 
   document.addEventListener('click', handleClick, { passive: true });
