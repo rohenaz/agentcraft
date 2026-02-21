@@ -27,26 +27,24 @@ This starts the web UI at `http://localhost:4040` and opens it in your browser.
 
 ## Sound Library
 
-Sounds live at `~/code/claude-sounds/`. Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file under this directory appears in the browser automatically, organized by subfolder.
+Clone the curated library to the expected location:
 
-Suggested structure:
+```bash
+git clone https://github.com/rohenaz/claude-sounds ~/code/claude-sounds
+```
+
+Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file under `~/code/claude-sounds/` appears in the browser automatically, organized by subfolder. The library includes:
 
 ```
 ~/code/claude-sounds/
-  sc2/terran/session-start/
-  sc2/terran/task-complete/
-  wc3/human/acknowledgment/
-  ff7/battle/
-  ff9/misc/
-  phones/nokia/alerts/
-  phones/pager/
-  phones/motorola/
-  apps/aim/
-  classic-os/
-  ui/sc2/          ← UI theme sounds (hover, click, error, etc.)
-  ui/wc3/
-  ui/ff7/
-  ui/ff9/
+  sc2/                  StarCraft II sounds (terran, protoss, zerg)
+  wc3/                  Warcraft III sounds
+  ff7/                  Final Fantasy VII sounds
+  ff9/                  Final Fantasy IX sounds
+  apps/                 Nostalgic app sounds (AIM, ICQ, Winamp)
+  classic-os/           Mac and Windows startup/UI sounds
+  phones/               Nokia alerts, Motorola buttons, pager beeps
+  ui/                   UI theme sounds (hover, click, error per theme)
 ```
 
 ## Assigning Hook Sounds
