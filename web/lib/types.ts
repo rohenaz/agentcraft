@@ -33,7 +33,8 @@ export interface UISlotMap {
   click?: string;      // relative path under ~/code/claude-sounds/
   hover?: string;
   error?: string;
-  pageChange?: string; // tab/page navigation
+  pageChange?: string; // tab/group navigation
+  toggle?: string;     // expand/collapse sidebar items
 }
 
 export interface SoundAssignments {

@@ -58,7 +58,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => { playUISound('pageChange', 0.25); setExpanded(!expanded); }}
+        onClick={() => { playUISound('toggle', 0.3); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -162,7 +162,7 @@ function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectM
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => { playUISound('pageChange', 0.25); setExpanded(!expanded); }}
+        onClick={() => { playUISound('toggle', 0.3); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -455,7 +455,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
                     className="flex items-center justify-between px-2 py-1 cursor-pointer transition-all"
                     style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
                     onClick={() => {
-                      playUISound('pageChange', 0.25);
+                      playUISound('toggle', 0.3);
                       setCollapsedNs(prev => {
                         const next = new Set(prev);
                         if (next.has(ns)) next.delete(ns); else next.add(ns);
