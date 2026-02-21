@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'SoundForge',
-  description: 'Assign sounds to Claude Code lifecycle events',
+  title: 'AgentCraft',
+  description: 'Assign sounds to AI coding agent lifecycle events',
 };
 
 export default function RootLayout({

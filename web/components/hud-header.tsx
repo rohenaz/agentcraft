@@ -10,9 +10,9 @@ export function HudHeader({ enabled, onToggle }: HudHeaderProps) {
     <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
       <div className="flex items-center gap-4">
         <h1 className="sf-heading text-lg font-bold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
-          SOUNDFORGE
+          AGENTCRAFT
         </h1>
-        <span className="text-xs opacity-40" style={{ color: 'var(--sf-cyan)' }}>v1.0</span>
+        <span className="text-xs opacity-40" style={{ color: 'var(--sf-cyan)' }}>v0.0.1</span>
         <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
         <span className="text-xs opacity-60">AUDIO ASSIGNMENT TERMINAL</span>
       </div>
