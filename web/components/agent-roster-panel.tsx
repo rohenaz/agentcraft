@@ -1,0 +1,443 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { HookSlot } from './hook-slot';
+import { AgentForm } from './agent-form';
+import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData } from '@/lib/types';
+
+const HOOK_GROUPS: { label: string; events: HookEvent[] }[] = [
+  { label: 'LIFECYCLE', events: ['SessionStart', 'SessionEnd', 'Stop'] },
+  { label: 'TOOLING', events: ['PreToolUse', 'PostToolUse', 'PostToolUseFailure'] },
+  { label: 'SUBAGENTS', events: ['SubagentStop'] },
+  { label: 'SYSTEM', events: ['Notification', 'PreCompact'] },
+];
+
+const ALL_EVENTS: HookEvent[] = HOOK_GROUPS.flatMap((g) => g.events);
+const SKILL_EVENTS: SkillHookEvent[] = ['PreToolUse', 'PostToolUse'];
+const SKILL_EVENT_LABELS: Record<SkillHookEvent, string> = {
+  PreToolUse: 'ON INVOKE',
+  PostToolUse: 'ON COMPLETE',
+};
+
+// ── Agent row ────────────────────────────────────────────────────
+
+interface AgentRowProps {
+  scope: string;
+  label: string;
+  isGlobal?: boolean;
+  hooks: Partial<Record<HookEvent, string>>;
+  enabled?: boolean;
+  agentInfo?: AgentInfo;
+  onToggle?: () => void;
+  onClear: (event: HookEvent) => void;
+  onPreview: (path: string) => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
+}
+
+function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete }: AgentRowProps) {
+  const [expanded, setExpanded] = useState(!!isGlobal);
+  const filledCount = Object.values(hooks).filter(Boolean).length;
+
+  return (
+    <div className="mb-1">
+      <div
+        className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all group"
+        style={{
+          border: `1px solid ${isGlobal ? 'var(--sf-border-gold)' : 'var(--sf-border)'}`,
+          backgroundColor: isGlobal ? 'rgba(255,192,0,0.04)' : 'transparent',
+        }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
+          <span
+            className="text-xs sf-heading font-semibold uppercase tracking-wider truncate"
+            style={{ color: isGlobal ? 'var(--sf-gold)' : 'rgba(255,255,255,0.8)' }}
+          >
+            {label}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[10px] opacity-40">{filledCount}/{ALL_EVENTS.length}</span>
+          {!isGlobal && onToggle && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggle(); }}
+              className="text-[10px] px-2 py-0.5 transition-all"
+              style={{
+                border: `1px solid ${enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.2)'}`,
+                color: enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.3)',
+              }}
+            >
+              {enabled ? 'ON' : 'OFF'}
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(); }}
+              className="text-[10px] px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-all"
+              style={{ border: '1px solid var(--sf-border)', color: 'rgba(255,255,255,0.4)' }}
+              title="Edit agent"
+            >
+              ✎
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onDelete(); }}
+              className="text-[10px] px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-all"
+              style={{ border: '1px solid rgba(255,51,102,0.3)', color: 'var(--sf-alert)' }}
+              title="Delete agent"
+            >
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="ml-3 mt-1 mb-2 space-y-1">
+          {HOOK_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="text-[9px] uppercase tracking-widest opacity-30 mb-1 ml-1">{group.label}</div>
+              {group.events.map((event) => (
+                <HookSlot
+                  key={event}
+                  event={event}
+                  scope={scope}
+                  assignedSound={hooks[event]}
+                  onClear={() => onClear(event)}
+                  onPreview={onPreview}
+                />
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Skill row ────────────────────────────────────────────────────
+
+interface SkillRowProps {
+  skill: SkillInfo;
+  hooks: Partial<Record<SkillHookEvent, string>>;
+  enabled: boolean;
+  onToggle: () => void;
+  onClear: (event: SkillHookEvent) => void;
+  onPreview: (path: string) => void;
+}
+
+function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview }: SkillRowProps) {
+  const [expanded, setExpanded] = useState(false);
+  const filledCount = Object.values(hooks).filter(Boolean).length;
+  const scope = `skill/${skill.qualifiedName}`;
+
+  return (
+    <div className="mb-1">
+      <div
+        className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all"
+        style={{ border: '1px solid rgba(0,168,255,0.2)', backgroundColor: 'rgba(0,168,255,0.03)' }}
+        onClick={() => setExpanded(!expanded)}
+      >
+        <div className="flex items-center gap-2 overflow-hidden">
+          <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
+          <span className="text-xs sf-heading font-semibold uppercase tracking-wider truncate" style={{ color: 'var(--sf-blue)' }}>
+            {skill.name}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[10px] opacity-40">{filledCount}/2</span>
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggle(); }}
+            className="text-[10px] px-2 py-0.5 transition-all"
+            style={{
+              border: `1px solid ${enabled ? 'var(--sf-blue)' : 'rgba(255,255,255,0.2)'}`,
+              color: enabled ? 'var(--sf-blue)' : 'rgba(255,255,255,0.3)',
+            }}
+          >
+            {enabled ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      </div>
+
+      {expanded && (
+        <div className="ml-3 mt-1 mb-2">
+          <div className="text-[9px] uppercase tracking-widest opacity-30 mb-1 ml-1">SIGNALS</div>
+          {SKILL_EVENTS.map((event) => (
+            <HookSlot
+              key={event}
+              event={event as HookEvent}
+              scope={scope}
+              assignedSound={hooks[event]}
+              onClear={() => onClear(event)}
+              onPreview={onPreview}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Panel export ─────────────────────────────────────────────────
+
+interface AgentRosterPanelProps {
+  assignments: SoundAssignments;
+  agents: AgentInfo[];
+  skills: SkillInfo[];
+  onAssignmentChange: (next: SoundAssignments) => void;
+  onPreview: (path: string) => void;
+  onAgentsChange: () => void;
+}
+
+export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange }: AgentRosterPanelProps) {
+  const [showForm, setShowForm] = useState(false);
+  const [editingAgent, setEditingAgent] = useState<AgentInfo | undefined>();
+  const [skillSearch, setSkillSearch] = useState('');
+  const [collapsedNs, setCollapsedNs] = useState<Set<string>>(new Set());
+
+  const clearGlobalHook = (event: HookEvent) => {
+    onAssignmentChange({ ...assignments, global: { ...assignments.global, [event]: undefined } });
+  };
+
+  const clearAgentHook = (agentName: string, event: HookEvent) => {
+    onAssignmentChange({
+      ...assignments,
+      agents: {
+        ...assignments.agents,
+        [agentName]: {
+          ...assignments.agents[agentName],
+          hooks: { ...assignments.agents[agentName]?.hooks, [event]: undefined },
+        },
+      },
+    });
+  };
+
+  const clearSkillHook = (skillName: string, event: SkillHookEvent) => {
+    onAssignmentChange({
+      ...assignments,
+      skills: {
+        ...assignments.skills,
+        [skillName]: {
+          ...assignments.skills[skillName],
+          hooks: { ...assignments.skills[skillName]?.hooks, [event]: undefined },
+        },
+      },
+    });
+  };
+
+  const toggleAgent = (agentName: string) => {
+    const current = assignments.agents[agentName] ?? { enabled: true, hooks: {} };
+    onAssignmentChange({
+      ...assignments,
+      agents: { ...assignments.agents, [agentName]: { ...current, enabled: !current.enabled } },
+    });
+  };
+
+  const toggleSkill = (skillName: string) => {
+    const current = assignments.skills[skillName] ?? { enabled: true, hooks: {} };
+    onAssignmentChange({
+      ...assignments,
+      skills: { ...assignments.skills, [skillName]: { ...current, enabled: !current.enabled } },
+    });
+  };
+
+  const handleSaveAgent = async (data: AgentFormData, originalName?: string) => {
+    if (originalName) {
+      await fetch(`/api/agents/${originalName}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await fetch('/api/agents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+    }
+    setShowForm(false);
+    setEditingAgent(undefined);
+    onAgentsChange();
+  };
+
+  const handleDeleteAgent = async (agentName: string) => {
+    await fetch(`/api/agents/${agentName}`, { method: 'DELETE' });
+    onAgentsChange();
+  };
+
+  const allAgentNames = new Set([
+    ...Object.keys(assignments.agents),
+    ...agents.map((a) => a.name),
+  ]);
+
+  // Build unified skill list: merge assigned skills + discovered skills by qualifiedName
+  const allSkills = useMemo(() => {
+    const map = new Map<string, SkillInfo>();
+    // Discovered skills
+    for (const s of skills) map.set(s.qualifiedName, s);
+    // Skills in assignments that weren't discovered (show them anyway)
+    for (const key of Object.keys(assignments.skills)) {
+      if (!map.has(key)) {
+        map.set(key, { name: key.includes(':') ? key.split(':').pop()! : key, qualifiedName: key, description: '' });
+      }
+    }
+    return [...map.values()];
+  }, [skills, assignments.skills]);
+
+  // Filter by search
+  const filteredSkills = useMemo(() => {
+    const q = skillSearch.toLowerCase();
+    return q ? allSkills.filter(s => s.qualifiedName.toLowerCase().includes(q) || s.description.toLowerCase().includes(q)) : allSkills;
+  }, [allSkills, skillSearch]);
+
+  // Group by namespace
+  const skillGroups = useMemo(() => {
+    const groups = new Map<string, SkillInfo[]>();
+    for (const s of filteredSkills) {
+      const ns = s.namespace ?? '(user)';
+      if (!groups.has(ns)) groups.set(ns, []);
+      groups.get(ns)!.push(s);
+    }
+    return [...groups.entries()].sort(([a], [b]) => {
+      if (a === '(user)') return -1;
+      if (b === '(user)') return 1;
+      return a.localeCompare(b);
+    });
+  }, [filteredSkills]);
+
+  return (
+    <div className="flex flex-col overflow-hidden">
+      {/* Header */}
+      <div className="shrink-0 px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
+        <div className="sf-heading text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
+          AGENT ROSTER
+        </div>
+        <button
+          onClick={() => { setShowForm(!showForm); setEditingAgent(undefined); }}
+          className="text-[10px] px-2 py-0.5 sf-heading uppercase tracking-wider transition-all"
+          style={{
+            border: `1px solid ${showForm ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+            color: showForm ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+          }}
+        >
+          {showForm ? '✕ CANCEL' : '+ UNIT'}
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3">
+        {/* Add/Edit form */}
+        {(showForm || editingAgent) && (
+          <AgentForm
+            initial={editingAgent}
+            onSave={handleSaveAgent}
+            onCancel={() => { setShowForm(false); setEditingAgent(undefined); }}
+          />
+        )}
+
+        {/* Global override */}
+        <AgentRow
+          scope="global"
+          label="GLOBAL OVERRIDE"
+          isGlobal
+          hooks={assignments.global}
+          onClear={clearGlobalHook}
+          onPreview={onPreview}
+        />
+
+        {/* Per-agent rows */}
+        {[...allAgentNames].map((name) => {
+          const config = assignments.agents[name] ?? { enabled: true, hooks: {} };
+          const agentInfo = agents.find((a) => a.name === name);
+          return (
+            <AgentRow
+              key={name}
+              scope={name}
+              label={name}
+              hooks={config.hooks}
+              enabled={config.enabled}
+              agentInfo={agentInfo}
+              onToggle={() => toggleAgent(name)}
+              onClear={(event) => clearAgentHook(name, event)}
+              onPreview={onPreview}
+              onEdit={() => { setEditingAgent(agentInfo); setShowForm(false); }}
+              onDelete={() => handleDeleteAgent(name)}
+            />
+          );
+        })}
+
+        {/* Skill Signals section */}
+        <div className="mt-4 mb-1 px-1">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,168,255,0.2)' }} />
+            <span className="sf-heading text-[9px] uppercase tracking-widest shrink-0" style={{ color: 'var(--sf-blue)', opacity: 0.7 }}>
+              SKILL SIGNALS
+            </span>
+            <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,168,255,0.2)' }} />
+          </div>
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="FILTER SKILLS..."
+            value={skillSearch}
+            onChange={e => setSkillSearch(e.target.value)}
+            className="w-full text-[10px] px-2 py-1 mb-2 bg-transparent outline-none sf-mono placeholder-opacity-30"
+            style={{
+              border: '1px solid var(--sf-border)',
+              color: 'rgba(255,255,255,0.6)',
+              caretColor: 'var(--sf-cyan)',
+            }}
+          />
+        </div>
+
+        {/* Grouped by namespace */}
+        {skillGroups.map(([ns, nsSkills]) => {
+          const isCollapsed = collapsedNs.has(ns);
+          const assignedCount = nsSkills.filter(s => assignments.skills[s.qualifiedName]?.hooks.PreToolUse || assignments.skills[s.qualifiedName]?.hooks.PostToolUse).length;
+          return (
+            <div key={ns} className="mb-1">
+              {/* Namespace header */}
+              <div
+                className="flex items-center justify-between px-2 py-1 cursor-pointer"
+                style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
+                onClick={() => setCollapsedNs(prev => {
+                  const next = new Set(prev);
+                  if (next.has(ns)) next.delete(ns); else next.add(ns);
+                  return next;
+                })}
+              >
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] opacity-40">{isCollapsed ? '▸' : '▾'}</span>
+                  <span className="sf-heading text-[9px] uppercase tracking-wider" style={{ color: 'var(--sf-blue)' }}>
+                    {ns}
+                  </span>
+                </div>
+                <span className="text-[9px] opacity-40">
+                  {assignedCount > 0 && <span style={{ color: 'var(--sf-blue)', marginRight: 4 }}>{assignedCount}✦</span>}
+                  {nsSkills.length}
+                </span>
+              </div>
+
+              {!isCollapsed && nsSkills.sort((a, b) => a.name.localeCompare(b.name)).map((s) => {
+                const config = assignments.skills[s.qualifiedName] ?? { enabled: true, hooks: {} };
+                return (
+                  <SkillRow
+                    key={s.qualifiedName}
+                    skill={s}
+                    hooks={config.hooks}
+                    enabled={config.enabled}
+                    onToggle={() => toggleSkill(s.qualifiedName)}
+                    onClear={(event) => clearSkillHook(s.qualifiedName, event)}
+                    onPreview={onPreview}
+                  />
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
