@@ -21,6 +21,14 @@ export interface SkillConfig {
   hooks: Partial<Record<SkillHookEvent, string>>;
 }
 
+export type UITheme = 'sc2' | 'wc3' | 'off';
+
+export interface UISlotMap {
+  click?: string; // relative path under ~/code/claude-sounds/
+  hover?: string;
+  error?: string;
+}
+
 export interface SoundAssignments {
   global: Partial<Record<HookEvent, string>>;
   agents: Record<string, AgentConfig>;
@@ -29,7 +37,8 @@ export interface SoundAssignments {
     masterVolume: number;
     enabled: boolean;
     theme: 'terran' | 'protoss' | 'zerg';
-    uiTheme: 'sc2' | 'wc3' | 'off';
+    uiTheme: UITheme;
+    uiSounds?: Record<string, UISlotMap>; // theme -> slot -> path
   };
 }
 

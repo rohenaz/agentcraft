@@ -5,6 +5,7 @@ interface HudHeaderProps {
   onToggle: () => void;
   uiTheme: 'sc2' | 'wc3' | 'off';
   onUiThemeChange: (theme: 'sc2' | 'wc3' | 'off') => void;
+  onConfigureUISounds: () => void;
 }
 
 const UI_THEMES: { value: 'sc2' | 'wc3' | 'off'; label: string }[] = [
@@ -13,7 +14,7 @@ const UI_THEMES: { value: 'sc2' | 'wc3' | 'off'; label: string }[] = [
   { value: 'off', label: 'OFF' },
 ];
 
-export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange }: HudHeaderProps) {
+export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds }: HudHeaderProps) {
   return (
     <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
       <div className="flex items-center gap-4">
@@ -43,6 +44,18 @@ export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange }: HudHe
               {t.label}
             </button>
           ))}
+          <button
+            data-sf-hover
+            onClick={onConfigureUISounds}
+            title="Configure UI sound assignments"
+            className="px-2 py-0.5 text-[10px] sf-heading font-medium uppercase tracking-wider transition-all ml-1"
+            style={{
+              border: '1px solid var(--sf-border)',
+              color: 'rgba(255,255,255,0.35)',
+            }}
+          >
+            ⚙
+          </button>
         </div>
 
         <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />

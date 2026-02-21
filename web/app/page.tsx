@@ -7,8 +7,9 @@ import { AgentRosterPanel } from '@/components/agent-roster-panel';
 import { SoundBrowserPanel } from '@/components/sound-browser-panel';
 import { AssignmentLogPanel } from '@/components/assignment-log-panel';
 import { SoundUnit } from '@/components/sound-unit';
-import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent } from '@/lib/types';
+import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent, UITheme, UISlotMap } from '@/lib/types';
 import { setUITheme, initGlobalUIListeners } from '@/lib/ui-audio';
+import { UISoundsModal } from '@/components/ui-sounds-modal';
 
 const DEFAULT_ASSIGNMENTS: SoundAssignments = {
   global: {},
@@ -24,6 +25,7 @@ export default function Page() {
   const [assignments, setAssignments] = useState<SoundAssignments>(DEFAULT_ASSIGNMENTS);
   const [isDirty, setIsDirty] = useState(false);
   const [activeSound, setActiveSound] = useState<SoundAsset | null>(null);
+  const [showUISoundsModal, setShowUISoundsModal] = useState(false);
   const cleanupUIRef = useRef<(() => void) | null>(null);
 
   const sensors = useSensors(
@@ -41,7 +43,7 @@ export default function Page() {
     fetch('/api/assignments').then((r) => r.json()).then((data: SoundAssignments) => {
       setAssignments(data);
       const theme = data.settings?.uiTheme ?? 'sc2';
-      setUITheme(theme);
+      setUITheme(theme, data.settings?.uiSounds?.[theme]);
       cleanupUIRef.current = initGlobalUIListeners();
     }).catch(console.error);
     fetchAgents();
@@ -77,12 +79,19 @@ export default function Page() {
     });
   }, [assignments, handleAssignmentChange]);
 
-  const handleUiThemeChange = useCallback((theme: 'sc2' | 'wc3' | 'off') => {
-    setUITheme(theme);
+  const handleUiThemeChange = useCallback((theme: UITheme) => {
+    setUITheme(theme, assignments.settings?.uiSounds?.[theme]);
     handleAssignmentChange({
       ...assignments,
       settings: { ...assignments.settings, uiTheme: theme },
     });
+  }, [assignments, handleAssignmentChange]);
+
+  const handleUISoundsConfigSave = useCallback((theme: UITheme, sounds: Record<string, UISlotMap>) => {
+    const nextSettings = { ...assignments.settings, uiTheme: theme, uiSounds: sounds };
+    setUITheme(theme, sounds[theme]);
+    handleAssignmentChange({ ...assignments, settings: nextSettings });
+    setIsDirty(true);
   }, [assignments, handleAssignmentChange]);
 
   const handleClearAssignment = useCallback((scope: string, event: HookEvent) => {
@@ -162,7 +171,7 @@ export default function Page() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen w-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--sf-bg)' }}>
-        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} />
+        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} onConfigureUISounds={() => setShowUISoundsModal(true)} />
         <div className="flex-1 grid overflow-hidden" style={{ gridTemplateColumns: '288px 1fr 320px' }}>
           <AgentRosterPanel
             assignments={assignments}
@@ -176,6 +185,14 @@ export default function Page() {
           <AssignmentLogPanel assignments={assignments} isDirty={isDirty} onClear={handleClearAssignment} onSave={handleSave} />
         </div>
       </div>
+      {showUISoundsModal && (
+        <UISoundsModal
+          uiTheme={assignments.settings.uiTheme ?? 'sc2'}
+          uiSounds={assignments.settings.uiSounds ?? {}}
+          onSave={handleUISoundsConfigSave}
+          onClose={() => setShowUISoundsModal(false)}
+        />
+      )}
       <DragOverlay dropAnimation={null}>
         {activeSound ? (
           <SoundUnit sound={activeSound} isAssigned={false} onPreview={() => Promise.resolve()} isOverlay />
