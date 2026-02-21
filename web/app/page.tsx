@@ -15,7 +15,16 @@ const DEFAULT_ASSIGNMENTS: SoundAssignments = {
   global: {},
   agents: {},
   skills: {},
-  settings: { masterVolume: 1.0, enabled: true, theme: 'terran', uiTheme: 'sc2' },
+  settings: {
+    masterVolume: 1.0,
+    enabled: true,
+    theme: 'terran',
+    uiTheme: 'sc2',
+    uiSounds: {
+      sc2: { hover: 'ui/sc-bigbox/set2-move.mp3', click: 'ui/sc2/click.mp3', error: 'ui/sc2/error.mp3' },
+      wc3: { hover: 'ui/wc3/hover.mp3', click: 'ui/wc3/click.mp3', error: 'ui/wc3/error.mp3' },
+    },
+  },
 };
 
 export default function Page() {

@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { SoundUnit } from './sound-unit';
 import { groupSoundsByCategory, getGroupLabel, getSubTabLabel } from '@/lib/utils';
+import { playUISound } from '@/lib/ui-audio';
 import type { SoundAsset, SoundAssignments } from '@/lib/types';
 
 interface SoundBrowserPanelProps {
@@ -15,6 +16,16 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
   const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
   const [search, setSearch] = useState('');
+
+  const handleGroupChange = useCallback((group: string) => {
+    setActiveGroup(group);
+    playUISound('pageChange', 0.4);
+  }, []);
+
+  const handleCategoryChange = useCallback((cat: string) => {
+    setActiveCategory(cat);
+    playUISound('pageChange', 0.35);
+  }, []);
 
   const allGroups = useMemo(() => {
     return [...new Set(sounds.map((s) => s.category.split('/')[0]))].sort();
@@ -89,7 +100,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
             <button
               key={group}
               data-sf-hover
-              onClick={() => setActiveGroup(group)}
+              onClick={() => handleGroupChange(group)}
               className="shrink-0 px-3 py-1 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
               style={{
                 border: `1px solid ${activeGroup === group ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
@@ -109,7 +120,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
               <button
                 key={cat}
                 data-sf-hover
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => handleCategoryChange(cat)}
                 className="shrink-0 px-2 py-0.5 text-[9px] sf-heading font-medium uppercase tracking-wider transition-all"
                 style={{
                   border: `1px solid ${effectiveCategory === cat ? 'rgba(0,229,255,0.6)' : 'rgba(0,229,255,0.15)'}`,

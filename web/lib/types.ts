@@ -24,9 +24,10 @@ export interface SkillConfig {
 export type UITheme = 'sc2' | 'wc3' | 'off';
 
 export interface UISlotMap {
-  click?: string; // relative path under ~/code/claude-sounds/
+  click?: string;      // relative path under ~/code/claude-sounds/
   hover?: string;
   error?: string;
+  pageChange?: string; // tab/page navigation
 }
 
 export interface SoundAssignments {

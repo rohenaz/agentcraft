@@ -1,6 +1,6 @@
 'use client';
 
-type SoundName = 'click' | 'hover' | 'error';
+type SoundName = 'click' | 'hover' | 'error' | 'pageChange';
 
 let audioCtx: AudioContext | null = null;
 const bufferCache = new Map<string, AudioBuffer | null>();
@@ -33,6 +33,7 @@ async function loadBuffer(url: string): Promise<AudioBuffer | null> {
 function urlFor(name: SoundName): string | null {
   if (currentTheme === 'off') return null;
   const custom = customSlots[name];
+  if (!custom && name === 'pageChange') return null; // no default for pageChange — must be explicitly set
   const rel = custom ?? `ui/${currentTheme}/${name}.mp3`;
   return `/api/audio/${rel}`;
 }
@@ -45,7 +46,7 @@ export async function setUITheme(
   customSlots = uiSounds ?? {};
   if (theme === 'off') return;
 
-  const names: SoundName[] = ['click', 'hover', 'error'];
+  const names: SoundName[] = ['click', 'hover', 'error', 'pageChange'];
   await Promise.all(
     names.map((name) => {
       const url = urlFor(name);

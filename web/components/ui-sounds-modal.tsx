@@ -10,12 +10,13 @@ interface UISound {
   group: string;
 }
 
-type SlotName = 'click' | 'hover' | 'error';
+type SlotName = 'click' | 'hover' | 'error' | 'pageChange';
 
 const SLOTS: { name: SlotName; label: string; desc: string }[] = [
   { name: 'hover', label: 'HOVER', desc: 'Mouse over interactive element' },
   { name: 'click', label: 'CLICK', desc: 'Button or card clicked' },
   { name: 'error', label: 'ERROR', desc: 'Action failed or invalid' },
+  { name: 'pageChange', label: 'PAGE CHANGE', desc: 'Tab / group navigation' },
 ];
 
 interface Props {
