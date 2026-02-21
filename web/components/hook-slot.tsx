@@ -76,6 +76,7 @@ export function HookSlot({ event, scope, assignedSound, onClear, onPreview, sele
     <div
       ref={setNodeRef}
       data-sf-hover
+      {...(assignedSound ? { 'data-no-ui-sound': '' } : {})}
       className="flex items-center justify-between px-2 py-1 text-xs transition-all cursor-pointer select-none"
       style={{
         borderWidth: '1px',
