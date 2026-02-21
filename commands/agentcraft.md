@@ -13,7 +13,7 @@ lsof -ti:4040
 
 If NOT running, start it:
 ```bash
-cd ~/code/agentcraft/web && bun install --silent && bun dev --port 4040 &
+cd "$CLAUDE_PLUGIN_ROOT/web" && bun install --silent && bun dev --port 4040 &
 ```
 
 Poll until server responds (max 15 attempts, 1s apart):
