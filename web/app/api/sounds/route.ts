@@ -63,11 +63,15 @@ async function walkDir(dir: string, base: string): Promise<SoundAsset[]> {
     } else if (entry.name.match(/\.(mp3|wav|ogg|m4a)$/i)) {
       const relativePath = fullPath.replace(base + '/', '');
       const parts = relativePath.split('/');
+      // For flat dirs (depth 1): icq/uh-oh.mp3 → category=icq, subcategory=''
+      // For nested dirs (depth 2+): sc2/terran/session-start/scv.mp3 → category=sc2/terran, subcategory=session-start
+      const category = parts.length > 2 ? parts.slice(0, -2).join('/') : parts[0];
+      const subcategory = parts.length > 2 ? parts[parts.length - 2] : '';
       assets.push({
         id: relativePath.replace(/\.[^/.]+$/, ''),
         filename: parts[parts.length - 1],
-        category: parts.slice(0, -2).join('/'),
-        subcategory: parts.length >= 2 ? parts[parts.length - 2] : '',
+        category,
+        subcategory,
         path: relativePath,
         waveform: FALLBACK,
       });

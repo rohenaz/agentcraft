@@ -22,12 +22,29 @@ export function getCategoryLabel(category: string): string {
     'sc2/terran': 'SC2 Terran',
     'sc2/protoss': 'SC2 Protoss',
     'sc2/zerg': 'SC2 Zerg',
+    'sc2/alerts': 'SC2 Alerts',
     'classic-os': 'Classic OS',
+    'classic-os/mac': 'Mac OS',
+    'classic-os/windows': 'Windows',
+    'classic-os/linux': 'Linux',
     'aim': 'AIM',
     'icq': 'ICQ',
     'winamp': 'Winamp',
+    'phones/nokia': 'Nokia',
+    'phones/motorola': 'Motorola',
+    'phones/samsung': 'Samsung',
+    'phones/sony-ericsson': 'Sony Ericsson',
+    'messengers/msn': 'MSN',
+    'messengers/yahoo': 'Yahoo',
+    'messengers/skype': 'Skype',
+    'devices/modem': 'Modem',
+    'devices/camera': 'Camera',
+    'devices/pager': 'Pager',
   };
-  return labels[category] ?? category;
+  // Auto-format unknown categories: "phones/nokia" → "Nokia"
+  return labels[category] ?? (category.split('/').pop() ?? category)
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export function getEventLabel(event: string): string {

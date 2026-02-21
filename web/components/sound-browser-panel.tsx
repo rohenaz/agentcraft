@@ -80,7 +80,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
         {Object.entries(grouped).map(([cat, subcats]) =>
           Object.entries(subcats).map(([subcat, catSounds]) => (
             <div key={`${cat}/${subcat}`} className="mb-4">
-              <div className="text-[10px] uppercase tracking-widest mb-2 opacity-40 px-1">{subcat.replace(/-/g, ' ')}</div>
+              {subcat && <div className="text-[10px] uppercase tracking-widest mb-2 opacity-40 px-1">{subcat.replace(/-/g, ' ')}</div>}
               <div className="grid grid-cols-2 gap-2">
                 {catSounds.map((sound) => (
                   <SoundUnit
