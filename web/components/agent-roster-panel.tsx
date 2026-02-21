@@ -220,6 +220,7 @@ interface AgentRosterPanelProps {
 }
 
 export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange, selectMode, onSlotSelect }: AgentRosterPanelProps) {
+  const [activeView, setActiveView] = useState<'agents' | 'skills'>('agents');
   const [showForm, setShowForm] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentInfo | undefined>();
   const [skillSearch, setSkillSearch] = useState('');
@@ -337,144 +338,164 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
 
   return (
     <div className="flex flex-col overflow-hidden">
-      {/* Header */}
-      <div className="shrink-0 px-4 py-2 border-b flex items-center justify-between" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
-        <div className="sf-heading text-xs font-semibold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
-          AGENT ROSTER
+      {/* Tab bar header */}
+      <div className="shrink-0 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
+        <div className="flex items-stretch">
+          {(['agents', 'skills'] as const).map((view) => (
+            <button
+              key={view}
+              data-sf-hover
+              data-no-ui-sound
+              onClick={() => {
+                if (activeView !== view) {
+                  playUISound('pageChange', 0.25);
+                  setActiveView(view);
+                }
+              }}
+              className="flex-1 py-2.5 text-[10px] sf-heading font-semibold uppercase tracking-widest transition-all"
+              style={{
+                color: activeView === view ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.35)',
+                borderBottom: `2px solid ${activeView === view ? 'var(--sf-cyan)' : 'transparent'}`,
+                backgroundColor: activeView === view ? 'rgba(0,229,255,0.04)' : 'transparent',
+              }}
+            >
+              {view === 'agents' ? 'AGENTS' : 'SKILLS'}
+            </button>
+          ))}
+          {activeView === 'agents' && (
+            <button
+              onClick={() => { setShowForm(!showForm); setEditingAgent(undefined); }}
+              className="text-[10px] px-3 sf-heading uppercase tracking-wider transition-all"
+              style={{
+                borderLeft: '1px solid var(--sf-border)',
+                color: showForm ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+              }}
+            >
+              {showForm ? '✕' : '+'}
+            </button>
+          )}
         </div>
-        <button
-          onClick={() => { setShowForm(!showForm); setEditingAgent(undefined); }}
-          className="text-[10px] px-2 py-0.5 sf-heading uppercase tracking-wider transition-all"
-          style={{
-            border: `1px solid ${showForm ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
-            color: showForm ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
-          }}
-        >
-          {showForm ? '✕ CANCEL' : '+ UNIT'}
-        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3">
-        {/* Add/Edit form */}
-        {(showForm || editingAgent) && (
-          <AgentForm
-            initial={editingAgent}
-            onSave={handleSaveAgent}
-            onCancel={() => { setShowForm(false); setEditingAgent(undefined); }}
-          />
-        )}
+        {activeView === 'agents' && (
+          <>
+            {/* Add/Edit form */}
+            {(showForm || editingAgent) && (
+              <AgentForm
+                initial={editingAgent}
+                onSave={handleSaveAgent}
+                onCancel={() => { setShowForm(false); setEditingAgent(undefined); }}
+              />
+            )}
 
-        {/* Global override */}
-        <AgentRow
-          scope="global"
-          label="GLOBAL OVERRIDE"
-          isGlobal
-          hooks={assignments.global}
-          onClear={clearGlobalHook}
-          onPreview={onPreview}
-          selectMode={selectMode}
-          onSlotSelect={onSlotSelect}
-        />
-
-        {/* Per-agent rows */}
-        {[...allAgentNames].map((name) => {
-          const config = assignments.agents[name] ?? { enabled: true, hooks: {} };
-          const agentInfo = agents.find((a) => a.name === name);
-          return (
+            {/* Global override */}
             <AgentRow
-              key={name}
-              scope={name}
-              label={name}
-              hooks={config.hooks}
-              enabled={config.enabled}
-              agentInfo={agentInfo}
-              onToggle={() => toggleAgent(name)}
-              onClear={(event) => clearAgentHook(name, event)}
+              scope="global"
+              label="GLOBAL OVERRIDE"
+              isGlobal
+              hooks={assignments.global}
+              onClear={clearGlobalHook}
               onPreview={onPreview}
-              onEdit={() => { setEditingAgent(agentInfo); setShowForm(false); }}
-              onDelete={() => handleDeleteAgent(name)}
               selectMode={selectMode}
               onSlotSelect={onSlotSelect}
             />
-          );
-        })}
 
-        {/* Skill Signals section */}
-        <div className="mt-4 mb-1 px-1">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,168,255,0.2)' }} />
-            <span className="sf-heading text-[9px] uppercase tracking-widest shrink-0" style={{ color: 'var(--sf-blue)', opacity: 0.7 }}>
-              SKILL SIGNALS
-            </span>
-            <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(0,168,255,0.2)' }} />
-          </div>
-          {/* Search */}
-          <input
-            type="text"
-            placeholder="FILTER SKILLS..."
-            value={skillSearch}
-            onChange={e => setSkillSearch(e.target.value)}
-            className="w-full text-[10px] px-2 py-1 mb-2 bg-transparent outline-none sf-mono placeholder-opacity-30"
-            style={{
-              border: '1px solid var(--sf-border)',
-              color: 'rgba(255,255,255,0.6)',
-              caretColor: 'var(--sf-cyan)',
-            }}
-          />
-        </div>
+            {/* Per-agent rows */}
+            {[...allAgentNames].map((name) => {
+              const config = assignments.agents[name] ?? { enabled: true, hooks: {} };
+              const agentInfo = agents.find((a) => a.name === name);
+              return (
+                <AgentRow
+                  key={name}
+                  scope={name}
+                  label={name}
+                  hooks={config.hooks}
+                  enabled={config.enabled}
+                  agentInfo={agentInfo}
+                  onToggle={() => toggleAgent(name)}
+                  onClear={(event) => clearAgentHook(name, event)}
+                  onPreview={onPreview}
+                  onEdit={() => { setEditingAgent(agentInfo); setShowForm(false); }}
+                  onDelete={() => handleDeleteAgent(name)}
+                  selectMode={selectMode}
+                  onSlotSelect={onSlotSelect}
+                />
+              );
+            })}
+          </>
+        )}
 
-        {/* Grouped by namespace */}
-        {skillGroups.map(([ns, nsSkills]) => {
-          const isCollapsed = collapsedNs.has(ns);
-          const assignedCount = nsSkills.filter(s => assignments.skills[s.qualifiedName]?.hooks.PreToolUse || assignments.skills[s.qualifiedName]?.hooks.PostToolUse).length;
-          return (
-            <div key={ns} className="mb-1">
-              {/* Namespace header */}
-              <div
-                data-sf-hover
-                data-no-ui-sound
-                className="flex items-center justify-between px-2 py-1 cursor-pointer transition-all"
-                style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
-                onClick={() => {
-                  playUISound('pageChange', 0.25);
-                  setCollapsedNs(prev => {
-                    const next = new Set(prev);
-                    if (next.has(ns)) next.delete(ns); else next.add(ns);
-                    return next;
-                  });
-                }}
-              >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] opacity-40">{isCollapsed ? '▸' : '▾'}</span>
-                  <span className="sf-heading text-[9px] uppercase tracking-wider" style={{ color: 'var(--sf-blue)' }}>
-                    {ns}
-                  </span>
+        {activeView === 'skills' && (
+          <>
+            {/* Search */}
+            <input
+              type="text"
+              placeholder="FILTER SKILLS..."
+              value={skillSearch}
+              onChange={e => setSkillSearch(e.target.value)}
+              className="w-full text-[10px] px-2 py-1 mb-3 bg-transparent outline-none sf-mono"
+              style={{
+                border: `1px solid ${skillSearch ? 'var(--sf-blue)' : 'var(--sf-border)'}`,
+                color: 'rgba(255,255,255,0.6)',
+                caretColor: 'var(--sf-cyan)',
+              }}
+            />
+
+            {/* Grouped by namespace */}
+            {skillGroups.map(([ns, nsSkills]) => {
+              const isCollapsed = collapsedNs.has(ns);
+              const assignedCount = nsSkills.filter(s => assignments.skills[s.qualifiedName]?.hooks.PreToolUse || assignments.skills[s.qualifiedName]?.hooks.PostToolUse).length;
+              return (
+                <div key={ns} className="mb-1">
+                  {/* Namespace header */}
+                  <div
+                    data-sf-hover
+                    data-no-ui-sound
+                    className="flex items-center justify-between px-2 py-1 cursor-pointer transition-all"
+                    style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
+                    onClick={() => {
+                      playUISound('pageChange', 0.25);
+                      setCollapsedNs(prev => {
+                        const next = new Set(prev);
+                        if (next.has(ns)) next.delete(ns); else next.add(ns);
+                        return next;
+                      });
+                    }}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[9px] opacity-40">{isCollapsed ? '▸' : '▾'}</span>
+                      <span className="sf-heading text-[9px] uppercase tracking-wider" style={{ color: 'var(--sf-blue)' }}>
+                        {ns}
+                      </span>
+                    </div>
+                    <span className="text-[9px] opacity-40">
+                      {assignedCount > 0 && <span style={{ color: 'var(--sf-blue)', marginRight: 4 }}>{assignedCount}✦</span>}
+                      {nsSkills.length}
+                    </span>
+                  </div>
+
+                  {!isCollapsed && nsSkills.sort((a, b) => a.name.localeCompare(b.name)).map((s) => {
+                    const config = assignments.skills[s.qualifiedName] ?? { enabled: true, hooks: {} };
+                    return (
+                      <SkillRow
+                        key={s.qualifiedName}
+                        skill={s}
+                        hooks={config.hooks}
+                        enabled={config.enabled}
+                        onToggle={() => toggleSkill(s.qualifiedName)}
+                        onClear={(event) => clearSkillHook(s.qualifiedName, event)}
+                        onPreview={onPreview}
+                        selectMode={selectMode}
+                        onSlotSelect={onSlotSelect}
+                      />
+                    );
+                  })}
                 </div>
-                <span className="text-[9px] opacity-40">
-                  {assignedCount > 0 && <span style={{ color: 'var(--sf-blue)', marginRight: 4 }}>{assignedCount}✦</span>}
-                  {nsSkills.length}
-                </span>
-              </div>
-
-              {!isCollapsed && nsSkills.sort((a, b) => a.name.localeCompare(b.name)).map((s) => {
-                const config = assignments.skills[s.qualifiedName] ?? { enabled: true, hooks: {} };
-                return (
-                  <SkillRow
-                    key={s.qualifiedName}
-                    skill={s}
-                    hooks={config.hooks}
-                    enabled={config.enabled}
-                    onToggle={() => toggleSkill(s.qualifiedName)}
-                    onClear={(event) => clearSkillHook(s.qualifiedName, event)}
-                    onPreview={onPreview}
-                    selectMode={selectMode}
-                    onSlotSelect={onSlotSelect}
-                  />
-                );
-              })}
-            </div>
-          );
-        })}
+              );
+            })}
+          </>
+        )}
       </div>
     </div>
   );
