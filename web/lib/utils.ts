@@ -17,31 +17,65 @@ export function groupSoundsByCategory(sounds: SoundAsset[]): Record<string, Reco
   return grouped;
 }
 
+export function getGroupLabel(group: string): string {
+  const labels: Record<string, string> = {
+    'sc2': 'SC2',
+    'wc3': 'Warcraft',
+    'aoe': 'AoE',
+    'cnc': 'C&C',
+    'homeworld': 'Homeworld',
+    'classic-os': 'Classic OS',
+    'apps': 'Apps',
+    'phones': 'Phones',
+    'devices': 'Devices',
+  };
+  return labels[group] ?? group.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function getSubTabLabel(category: string): string {
+  const labels: Record<string, string> = {
+    'sc2/terran': 'Terran',
+    'sc2/protoss': 'Protoss',
+    'sc2/zerg': 'Zerg',
+    'sc2/alerts': 'Alerts',
+    'wc3/orc': 'Orc',
+    'wc3/human': 'Human',
+    'wc3/nightelf': 'Night Elf',
+    'wc3/undead': 'Undead',
+    'cnc/gdi': 'GDI',
+    'cnc/nod': 'NOD',
+    'cnc/allied': 'Allied',
+    'cnc/soviet': 'Soviet',
+    'cnc/eva': 'EVA',
+  };
+  const segment = category.split('/').pop() ?? category;
+  return labels[category] ?? segment.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export function getCategoryLabel(category: string): string {
   const labels: Record<string, string> = {
     'sc2/terran': 'SC2 Terran',
     'sc2/protoss': 'SC2 Protoss',
     'sc2/zerg': 'SC2 Zerg',
     'sc2/alerts': 'SC2 Alerts',
+    'wc3/orc': 'WC3 Orc',
+    'wc3/human': 'WC3 Human',
+    'wc3/nightelf': 'WC3 Night Elf',
+    'wc3/undead': 'WC3 Undead',
     'classic-os': 'Classic OS',
-    'classic-os/mac': 'Mac OS',
-    'classic-os/windows': 'Windows',
-    'classic-os/linux': 'Linux',
-    'aim': 'AIM',
-    'icq': 'ICQ',
-    'winamp': 'Winamp',
-    'phones/nokia': 'Nokia',
-    'phones/motorola': 'Motorola',
-    'phones/samsung': 'Samsung',
-    'phones/sony-ericsson': 'Sony Ericsson',
-    'messengers/msn': 'MSN',
-    'messengers/yahoo': 'Yahoo',
-    'messengers/skype': 'Skype',
-    'devices/modem': 'Modem',
-    'devices/camera': 'Camera',
-    'devices/pager': 'Pager',
+    'apps': 'Apps',
+    'phones': 'Phones',
+    'devices': 'Devices',
+    'homeworld': 'Homeworld',
+    'aoe': 'Age of Empires',
+    'cnc': 'C&C',
+    'cnc/gdi': 'C&C GDI',
+    'cnc/nod': 'C&C NOD',
+    'cnc/allied': 'C&C Allied',
+    'cnc/soviet': 'C&C Soviet',
+    'cnc/eva': 'C&C EVA',
   };
-  // Auto-format unknown categories: "phones/nokia" → "Nokia"
+  // Auto-format unknown categories
   return labels[category] ?? (category.split('/').pop() ?? category)
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());

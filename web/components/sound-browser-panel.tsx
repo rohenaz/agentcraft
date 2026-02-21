@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { SoundUnit } from './sound-unit';
-import { groupSoundsByCategory, getCategoryLabel } from '@/lib/utils';
+import { groupSoundsByCategory, getGroupLabel, getSubTabLabel } from '@/lib/utils';
 import type { SoundAsset, SoundAssignments } from '@/lib/types';
 
 interface SoundBrowserPanelProps {
@@ -12,12 +12,24 @@ interface SoundBrowserPanelProps {
 }
 
 export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrowserPanelProps) {
+  const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
   const [search, setSearch] = useState('');
 
-  const allCategories = useMemo(() => {
-    return [...new Set(sounds.map((s) => s.category))].sort();
+  const allGroups = useMemo(() => {
+    return [...new Set(sounds.map((s) => s.category.split('/')[0]))].sort();
   }, [sounds]);
+
+  const groupCategories = useMemo(() => {
+    return [...new Set(
+      sounds.filter((s) => s.category.split('/')[0] === activeGroup).map((s) => s.category)
+    )].sort();
+  }, [sounds, activeGroup]);
+
+  // If activeCategory doesn't belong to current group, use first category of the group
+  const effectiveCategory = groupCategories.includes(activeCategory)
+    ? activeCategory
+    : (groupCategories[0] ?? '');
 
   const assignedPaths = useMemo(() => {
     const paths = new Set<string>();
@@ -30,13 +42,15 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
 
   const filteredSounds = useMemo(() => {
     return sounds.filter((s) => {
-      if (s.category !== activeCategory) return false;
+      if (s.category !== effectiveCategory) return false;
       if (search && !s.filename.toLowerCase().includes(search.toLowerCase())) return false;
       return true;
     });
-  }, [sounds, activeCategory, search]);
+  }, [sounds, effectiveCategory, search]);
 
   const grouped = useMemo(() => groupSoundsByCategory(filteredSounds), [filteredSounds]);
+
+  const showSubTabs = groupCategories.length > 1;
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ borderLeft: '1px solid var(--sf-border)', borderRight: '1px solid var(--sf-border)' }}>
@@ -56,23 +70,43 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
           style={{ border: '1px solid var(--sf-border)', color: 'var(--sf-cyan)' }}
         />
 
-        {/* Category tabs */}
+        {/* Group tabs */}
         <div className="flex gap-1 mt-2 overflow-x-auto">
-          {allCategories.map((cat) => (
+          {allGroups.map((group) => (
             <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
+              key={group}
+              onClick={() => setActiveGroup(group)}
               className="shrink-0 px-3 py-1 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
               style={{
-                border: `1px solid ${activeCategory === cat ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
-                color: activeCategory === cat ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
-                backgroundColor: activeCategory === cat ? 'rgba(0,229,255,0.08)' : 'transparent',
+                border: `1px solid ${activeGroup === group ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+                color: activeGroup === group ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+                backgroundColor: activeGroup === group ? 'rgba(0,229,255,0.08)' : 'transparent',
               }}
             >
-              {getCategoryLabel(cat)}
+              {getGroupLabel(group)}
             </button>
           ))}
         </div>
+
+        {/* Sub-tabs (race / platform) */}
+        {showSubTabs && (
+          <div className="flex gap-1 mt-1 overflow-x-auto">
+            {groupCategories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="shrink-0 px-2 py-0.5 text-[9px] sf-heading font-medium uppercase tracking-wider transition-all"
+                style={{
+                  border: `1px solid ${effectiveCategory === cat ? 'rgba(0,229,255,0.6)' : 'rgba(0,229,255,0.15)'}`,
+                  color: effectiveCategory === cat ? 'rgba(0,229,255,0.8)' : 'rgba(255,255,255,0.3)',
+                  backgroundColor: effectiveCategory === cat ? 'rgba(0,229,255,0.05)' : 'transparent',
+                }}
+              >
+                {getSubTabLabel(cat)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Sound grid */}
