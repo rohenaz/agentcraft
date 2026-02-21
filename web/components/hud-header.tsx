@@ -18,7 +18,7 @@ export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfi
   return (
     <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
       <div className="flex items-center gap-4">
-        <h1 className="sf-heading text-lg font-bold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
+        <h1 className="sf-logo text-lg font-bold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
           AGENTCRAFT
         </h1>
         <span className="text-xs opacity-40" style={{ color: 'var(--sf-cyan)' }}>v0.0.1</span>

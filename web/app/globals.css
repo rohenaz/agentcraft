@@ -1,6 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Share+Tech+Mono&display=swap');
 @import "tailwindcss";
 
+@font-face {
+  font-family: 'Starcraft';
+  src: url('/fonts/starcraft-normal.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --sf-bg: #07090F;
   --sf-panel: #0A0E18;
@@ -28,6 +36,10 @@ body {
 
 .sf-heading {
   font-family: 'Chakra Petch', sans-serif;
+}
+
+.sf-logo {
+  font-family: 'Starcraft', 'Chakra Petch', sans-serif;
 }
 
 /* Scanlines overlay */
