@@ -1,9 +1,10 @@
 #!/bin/bash
-# SoundForge hook - plays assigned sound for this event/agent/skill
+# AgentCraft hook - plays assigned sound for this event/agent/skill
 CONFIG="$HOME/.claude/sounds/assignments.json"
 LIBRARY="$HOME/code/claude-sounds"
 
-INPUT=$(cat)
+# timeout 2: prevents blocking if Claude Code doesn't close stdin (e.g. on crash)
+INPUT=$(timeout 2 cat 2>/dev/null || echo '{}')
 EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // empty')
 AGENT=$(echo "$INPUT" | jq -r '.agent_type // empty')
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
@@ -13,6 +14,18 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 
 ENABLED=$(jq -r '.settings.enabled // true' "$CONFIG")
 [ "$ENABLED" = "false" ] && exit 0
+
+# Deduplicate: prevent the same event from firing within 3 seconds.
+# Claude Code fires SessionStart twice on resume (process init + session restore).
+LOCKFILE="/tmp/agentcraft-${EVENT}.lock"
+NOW=$(date +%s)
+if [ -f "$LOCKFILE" ]; then
+  LAST=$(cat "$LOCKFILE" 2>/dev/null || echo 0)
+  if [ $((NOW - LAST)) -lt 3 ]; then
+    exit 0
+  fi
+fi
+echo "$NOW" > "$LOCKFILE"
 
 SOUND=""
 
