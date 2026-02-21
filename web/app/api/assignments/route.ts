@@ -9,8 +9,10 @@ export async function GET() {
   try {
     const data = await readFile(ASSIGNMENTS_PATH, 'utf-8');
     const parsed = JSON.parse(data);
-    // Ensure skills key exists for older assignment files
+    // Ensure required keys exist for older assignment files
     if (!parsed.skills) parsed.skills = {};
+    if (!parsed.settings) parsed.settings = {};
+    if (!parsed.settings.uiTheme) parsed.settings.uiTheme = 'sc2';
     return NextResponse.json(parsed);
   } catch {
     return NextResponse.json({
