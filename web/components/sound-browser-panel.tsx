@@ -40,17 +40,25 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
     return paths;
   }, [assignments]);
 
+  const isSearching = search.trim().length > 0;
+
   const filteredSounds = useMemo(() => {
-    return sounds.filter((s) => {
-      if (s.category !== effectiveCategory) return false;
-      if (search && !s.filename.toLowerCase().includes(search.toLowerCase())) return false;
-      return true;
-    });
-  }, [sounds, effectiveCategory, search]);
+    if (isSearching) {
+      // Global search across all sounds
+      const q = search.toLowerCase();
+      return sounds.filter((s) =>
+        s.filename.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q) ||
+        s.subcategory.toLowerCase().includes(q)
+      );
+    }
+    // Normal tab-filtered view
+    return sounds.filter((s) => s.category === effectiveCategory);
+  }, [sounds, effectiveCategory, search, isSearching]);
 
   const grouped = useMemo(() => groupSoundsByCategory(filteredSounds), [filteredSounds]);
 
-  const showSubTabs = groupCategories.length > 1;
+  const showSubTabs = !isSearching && groupCategories.length > 1;
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ borderLeft: '1px solid var(--sf-border)', borderRight: '1px solid var(--sf-border)' }}>
@@ -63,15 +71,20 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
         {/* Search */}
         <input
           type="text"
-          placeholder="SEARCH SOUNDS..."
+          placeholder="SEARCH ALL SOUNDS..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => e.key === 'Escape' && setSearch('')}
           className="w-full px-3 py-1 text-xs bg-transparent outline-none"
-          style={{ border: '1px solid var(--sf-border)', color: 'var(--sf-cyan)' }}
+          style={{
+            border: `1px solid ${isSearching ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+            color: 'var(--sf-cyan)',
+            boxShadow: isSearching ? '0 0 6px rgba(0,229,255,0.15)' : undefined,
+          }}
         />
 
         {/* Group tabs */}
-        <div className="flex gap-1 mt-2 overflow-x-auto">
+        <div className="flex gap-1 mt-2 overflow-x-auto" style={{ opacity: isSearching ? 0.3 : 1, pointerEvents: isSearching ? 'none' : 'auto' }}>
           {allGroups.map((group) => (
             <button
               key={group}
@@ -113,23 +126,35 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
 
       {/* Sound grid */}
       <div className="flex-1 overflow-y-auto p-3">
-        {Object.entries(grouped).map(([cat, subcats]) =>
-          Object.entries(subcats).map(([subcat, catSounds]) => (
-            <div key={`${cat}/${subcat}`} className="mb-4">
-              {subcat && <div className="text-[10px] uppercase tracking-widest mb-2 opacity-40 px-1">{subcat.replace(/-/g, ' ')}</div>}
-              <div className="grid grid-cols-2 gap-2">
-                {catSounds.map((sound) => (
-                  <SoundUnit
-                    key={sound.id}
-                    sound={sound}
-                    isAssigned={assignedPaths.has(sound.path)}
-                    onPreview={onPreview}
-                  />
-                ))}
-              </div>
-            </div>
-          ))
+        {isSearching && filteredSounds.length > 0 && (
+          <div className="text-[9px] uppercase tracking-widest mb-3 opacity-40 px-1">
+            {filteredSounds.length} result{filteredSounds.length !== 1 ? 's' : ''}
+          </div>
         )}
+        {Object.entries(grouped).map(([cat, subcats]) => (
+          <div key={cat}>
+            {isSearching && (
+              <div className="text-[9px] uppercase tracking-widest mb-1 mt-3 px-1 first:mt-0" style={{ color: 'var(--sf-cyan)', opacity: 0.6 }}>
+                {cat.replace(/\//g, ' › ')}
+              </div>
+            )}
+            {Object.entries(subcats).map(([subcat, catSounds]) => (
+              <div key={`${cat}/${subcat}`} className="mb-4">
+                {subcat && <div className="text-[10px] uppercase tracking-widest mb-2 opacity-40 px-1">{subcat.replace(/-/g, ' ')}</div>}
+                <div className="grid grid-cols-2 gap-2">
+                  {catSounds.map((sound) => (
+                    <SoundUnit
+                      key={sound.id}
+                      sound={sound}
+                      isAssigned={assignedPaths.has(sound.path)}
+                      onPreview={onPreview}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
         {filteredSounds.length === 0 && (
           <div className="text-xs opacity-30 text-center py-8">NO SOUNDS FOUND</div>
         )}
