@@ -110,7 +110,7 @@ export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
         {/* Theme selector */}
         <div className="flex items-center gap-2 px-5 py-2 shrink-0" style={{ borderBottom: '1px solid var(--sf-border)' }}>
           <span className="text-[10px] tracking-widest uppercase opacity-40">THEME</span>
-          {(['sc2', 'wc3'] as const).map((t) => (
+          {(['sc2', 'wc3', 'ff7', 'ff9'] as const).map((t) => (
             <button
               key={t}
               data-sf-hover
