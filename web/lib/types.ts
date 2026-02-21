@@ -23,6 +23,12 @@ export interface SkillConfig {
 
 export type UITheme = 'sc2' | 'wc3' | 'off';
 
+export interface SelectMode {
+  scope: string;  // 'global' | agent-name | 'skill/qualifiedName'
+  event: string;  // HookEvent | SkillHookEvent
+  label: string;  // e.g. "SESSION START"
+}
+
 export interface UISlotMap {
   click?: string;      // relative path under ~/code/claude-sounds/
   hover?: string;

@@ -7,7 +7,7 @@ import { AgentRosterPanel } from '@/components/agent-roster-panel';
 import { SoundBrowserPanel } from '@/components/sound-browser-panel';
 import { AssignmentLogPanel } from '@/components/assignment-log-panel';
 import { SoundUnit } from '@/components/sound-unit';
-import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent, UITheme, UISlotMap } from '@/lib/types';
+import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent, UITheme, UISlotMap, SelectMode } from '@/lib/types';
 import { setUITheme, initGlobalUIListeners } from '@/lib/ui-audio';
 import { UISoundsModal } from '@/components/ui-sounds-modal';
 
@@ -35,6 +35,7 @@ export default function Page() {
   const [isDirty, setIsDirty] = useState(false);
   const [activeSound, setActiveSound] = useState<SoundAsset | null>(null);
   const [showUISoundsModal, setShowUISoundsModal] = useState(false);
+  const [selectMode, setSelectMode] = useState<SelectMode | null>(null);
   const cleanupUIRef = useRef<(() => void) | null>(null);
 
   const sensors = useSensors(
@@ -58,6 +59,14 @@ export default function Page() {
     fetchAgents();
     return () => { cleanupUIRef.current?.(); };
   }, [fetchAgents]);
+
+  // Clear select mode on ESC
+  useEffect(() => {
+    if (!selectMode) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelectMode(null); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [selectMode]);
 
   const handleAssignmentChange = useCallback((next: SoundAssignments) => {
     setAssignments(next);
@@ -102,6 +111,39 @@ export default function Page() {
     handleAssignmentChange({ ...assignments, settings: nextSettings });
     setIsDirty(true);
   }, [assignments, handleAssignmentChange]);
+
+  // Called from SoundBrowserPanel when in select mode and user clicks a sound card
+  const handleSelectModeAssign = useCallback((soundPath: string) => {
+    if (!selectMode) return;
+    const { scope, event } = selectMode;
+    if (scope === 'global') {
+      handleAssignmentChange({ ...assignments, global: { ...assignments.global, [event]: soundPath } });
+    } else if (scope.startsWith('skill/')) {
+      const skillName = scope.slice(6);
+      handleAssignmentChange({
+        ...assignments,
+        skills: {
+          ...assignments.skills,
+          [skillName]: {
+            enabled: assignments.skills[skillName]?.enabled ?? true,
+            hooks: { ...assignments.skills[skillName]?.hooks, [event]: soundPath },
+          },
+        },
+      });
+    } else {
+      handleAssignmentChange({
+        ...assignments,
+        agents: {
+          ...assignments.agents,
+          [scope]: {
+            enabled: assignments.agents[scope]?.enabled ?? true,
+            hooks: { ...assignments.agents[scope]?.hooks, [event]: soundPath },
+          },
+        },
+      });
+    }
+    setSelectMode(null);
+  }, [selectMode, assignments, handleAssignmentChange]);
 
   const handleClearAssignment = useCallback((scope: string, event: HookEvent) => {
     if (scope === 'global') {
@@ -189,8 +231,17 @@ export default function Page() {
             onAssignmentChange={handleAssignmentChange}
             onPreview={handlePreview}
             onAgentsChange={fetchAgents}
+            selectMode={selectMode}
+            onSlotSelect={setSelectMode}
           />
-          <SoundBrowserPanel sounds={sounds} assignments={assignments} onPreview={handlePreview} />
+          <SoundBrowserPanel
+            sounds={sounds}
+            assignments={assignments}
+            onPreview={handlePreview}
+            selectMode={selectMode}
+            onSelectModeAssign={handleSelectModeAssign}
+            onClearSelectMode={() => setSelectMode(null)}
+          />
           <AssignmentLogPanel assignments={assignments} isDirty={isDirty} onClear={handleClearAssignment} onSave={handleSave} />
         </div>
       </div>

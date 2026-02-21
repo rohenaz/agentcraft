@@ -4,15 +4,18 @@ import { useState, useMemo, useCallback } from 'react';
 import { SoundUnit } from './sound-unit';
 import { groupSoundsByCategory, getGroupLabel, getSubTabLabel } from '@/lib/utils';
 import { playUISound } from '@/lib/ui-audio';
-import type { SoundAsset, SoundAssignments } from '@/lib/types';
+import type { SoundAsset, SoundAssignments, SelectMode } from '@/lib/types';
 
 interface SoundBrowserPanelProps {
   sounds: SoundAsset[];
   assignments: SoundAssignments;
   onPreview: (path: string) => void;
+  selectMode: SelectMode | null;
+  onSelectModeAssign: (path: string) => void;
+  onClearSelectMode: () => void;
 }
 
-export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrowserPanelProps) {
+export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, onSelectModeAssign, onClearSelectMode }: SoundBrowserPanelProps) {
   const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
   const [search, setSearch] = useState('');
@@ -135,6 +138,33 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
         )}
       </div>
 
+      {/* Select mode banner */}
+      {selectMode && (
+        <div
+          className="shrink-0 flex items-center justify-between px-4 py-2"
+          style={{
+            backgroundColor: 'rgba(0,229,255,0.08)',
+            borderBottom: '1px solid var(--sf-cyan)',
+            boxShadow: '0 0 12px rgba(0,229,255,0.1)',
+          }}
+        >
+          <div>
+            <span className="text-[10px] sf-heading font-semibold tracking-widest" style={{ color: 'var(--sf-cyan)' }}>
+              ASSIGNING → {selectMode.label}
+            </span>
+            <span className="text-[10px] opacity-40 ml-3">click a sound card to assign</span>
+          </div>
+          <button
+            data-no-ui-sound
+            onClick={onClearSelectMode}
+            className="text-[10px] px-2 py-0.5 transition-opacity"
+            style={{ border: '1px solid rgba(0,229,255,0.3)', color: 'rgba(0,229,255,0.6)' }}
+          >
+            ESC
+          </button>
+        </div>
+      )}
+
       {/* Sound grid */}
       <div className="flex-1 overflow-y-auto p-3">
         {isSearching && filteredSounds.length > 0 && (
@@ -159,6 +189,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview }: SoundBrows
                       sound={sound}
                       isAssigned={assignedPaths.has(sound.path)}
                       onPreview={onPreview}
+                      onSelectAssign={selectMode ? () => onSelectModeAssign(sound.path) : undefined}
                     />
                   ))}
                 </div>

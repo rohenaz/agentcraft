@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import { HookSlot } from './hook-slot';
 import { AgentForm } from './agent-form';
 import { playUISound } from '@/lib/ui-audio';
-import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData } from '@/lib/types';
+import { getEventLabel } from '@/lib/utils';
+import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData, SelectMode } from '@/lib/types';
 
 const HOOK_GROUPS: { label: string; events: HookEvent[] }[] = [
   { label: 'LIFECYCLE', events: ['SessionStart', 'SessionEnd', 'Stop'] },
@@ -34,9 +35,11 @@ interface AgentRowProps {
   onPreview: (path: string) => void;
   onEdit?: () => void;
   onDelete?: () => void;
+  selectMode: SelectMode | null;
+  onSlotSelect: (mode: SelectMode) => void;
 }
 
-function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete }: AgentRowProps) {
+function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete, selectMode, onSlotSelect }: AgentRowProps) {
   const [expanded, setExpanded] = useState(!!isGlobal);
   const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
@@ -115,6 +118,8 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
                   assignedSound={hooks[event]}
                   onClear={() => onClear(event)}
                   onPreview={onPreview}
+                  selectMode={selectMode}
+                  onSelect={() => onSlotSelect({ scope, event, label: getEventLabel(event) })}
                 />
               ))}
             </div>
@@ -134,9 +139,11 @@ interface SkillRowProps {
   onToggle: () => void;
   onClear: (event: SkillHookEvent) => void;
   onPreview: (path: string) => void;
+  selectMode: SelectMode | null;
+  onSlotSelect: (mode: SelectMode) => void;
 }
 
-function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview }: SkillRowProps) {
+function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectMode, onSlotSelect }: SkillRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
@@ -187,6 +194,8 @@ function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview }: Skill
               assignedSound={hooks[event]}
               onClear={() => onClear(event)}
               onPreview={onPreview}
+              selectMode={selectMode}
+              onSelect={() => onSlotSelect({ scope, event, label: SKILL_EVENT_LABELS[event] })}
             />
           ))}
         </div>
@@ -204,9 +213,11 @@ interface AgentRosterPanelProps {
   onAssignmentChange: (next: SoundAssignments) => void;
   onPreview: (path: string) => void;
   onAgentsChange: () => void;
+  selectMode: SelectMode | null;
+  onSlotSelect: (mode: SelectMode) => void;
 }
 
-export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange }: AgentRosterPanelProps) {
+export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange, selectMode, onSlotSelect }: AgentRosterPanelProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentInfo | undefined>();
   const [skillSearch, setSkillSearch] = useState('');
@@ -359,6 +370,8 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
           hooks={assignments.global}
           onClear={clearGlobalHook}
           onPreview={onPreview}
+          selectMode={selectMode}
+          onSlotSelect={onSlotSelect}
         />
 
         {/* Per-agent rows */}
@@ -378,6 +391,8 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
               onPreview={onPreview}
               onEdit={() => { setEditingAgent(agentInfo); setShowForm(false); }}
               onDelete={() => handleDeleteAgent(name)}
+              selectMode={selectMode}
+              onSlotSelect={onSlotSelect}
             />
           );
         })}
@@ -449,6 +464,8 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
                     onToggle={() => toggleSkill(s.qualifiedName)}
                     onClear={(event) => clearSkillHook(s.qualifiedName, event)}
                     onPreview={onPreview}
+                    selectMode={selectMode}
+                    onSlotSelect={onSlotSelect}
                   />
                 );
               })}

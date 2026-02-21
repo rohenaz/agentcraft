@@ -10,11 +10,12 @@ interface SoundUnitProps {
   isAssigned: boolean;
   onPreview: (path: string) => void;
   isOverlay?: boolean;
+  onSelectAssign?: () => void; // if set, card click assigns instead of plays
 }
 
 const BARS = 16;
 
-export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnitProps) {
+export function SoundUnit({ sound, isAssigned, onPreview, isOverlay, onSelectAssign }: SoundUnitProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [bars, setBars] = useState<number[]>(sound.waveform.map(h => h / 10));
@@ -94,13 +95,13 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
   }, [isPlaying, sound.path, stop]);
 
   const handleCardClick = useCallback(() => {
-    // If a drag just happened, suppress the click
-    if (didDragRef.current) {
-      didDragRef.current = false;
-      return;
+    if (didDragRef.current) { didDragRef.current = false; return; }
+    if (onSelectAssign) {
+      onSelectAssign();
+    } else {
+      playSound();
     }
-    playSound();
-  }, [playSound]);
+  }, [playSound, onSelectAssign]);
 
   if (isOverlay) {
     return (
@@ -144,6 +145,8 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
         border: `1px solid ${
           isDragging ? 'var(--sf-cyan)'
           : isPlaying ? 'var(--sf-cyan)'
+          : onSelectAssign && lit ? 'rgba(0,229,255,0.8)'
+          : onSelectAssign ? 'rgba(0,229,255,0.35)'
           : lit ? 'rgba(0,229,255,0.55)'
           : isAssigned ? 'rgba(0,255,136,0.4)'
           : 'var(--sf-border)'
@@ -188,16 +191,11 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay }: SoundUnit
         >
           {formatSoundName(sound.filename)}
         </span>
+        {onSelectAssign && !isPlaying && (
+          <span className="shrink-0 text-[9px]" style={{ color: 'rgba(0,229,255,0.5)' }}>→</span>
+        )}
         {isPlaying && (
-          <button
-            onClick={(e) => { e.stopPropagation(); stop(); }}
-            className="shrink-0 w-5 h-5 flex items-center justify-center text-[10px] transition-all"
-            style={{ border: '1px solid var(--sf-cyan)', color: 'var(--sf-cyan)' }}
-            onMouseDown={(e) => e.stopPropagation()}
-            data-no-ui-sound
-          >
-            &#x25A0;
-          </button>
+          <span className="shrink-0 text-[9px] animate-pulse" style={{ color: 'var(--sf-cyan)' }}>♪</span>
         )}
       </div>
     </div>
