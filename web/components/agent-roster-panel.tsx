@@ -48,6 +48,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
     <div className="mb-1">
       <div
         data-sf-hover
+        data-no-ui-sound
         className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all group"
         style={{
           border: `1px solid ${isGlobal ? 'var(--sf-border-gold)' : isHovered ? 'rgba(0,229,255,0.35)' : 'var(--sf-border)'}`,
@@ -57,7 +58,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => { playUISound('click'); setExpanded(!expanded); }}
+        onClick={() => { playUISound('pageChange', 0.25); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -153,6 +154,7 @@ function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectM
     <div className="mb-1">
       <div
         data-sf-hover
+        data-no-ui-sound
         className="flex items-center justify-between px-3 py-2 cursor-pointer transition-all"
         style={{
           border: `1px solid ${isHovered ? 'rgba(0,168,255,0.4)' : 'rgba(0,168,255,0.2)'}`,
@@ -160,7 +162,7 @@ function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectM
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        onClick={() => { playUISound('click'); setExpanded(!expanded); }}
+        onClick={() => { playUISound('pageChange', 0.25); setExpanded(!expanded); }}
       >
         <div className="flex items-center gap-2 overflow-hidden">
           <span className="text-[10px] opacity-60 shrink-0">{expanded ? '▾' : '▸'}</span>
@@ -430,10 +432,11 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
               {/* Namespace header */}
               <div
                 data-sf-hover
+                data-no-ui-sound
                 className="flex items-center justify-between px-2 py-1 cursor-pointer transition-all"
                 style={{ backgroundColor: 'rgba(0,168,255,0.05)', borderBottom: '1px solid rgba(0,168,255,0.1)' }}
                 onClick={() => {
-                  playUISound('click');
+                  playUISound('pageChange', 0.25);
                   setCollapsedNs(prev => {
                     const next = new Set(prev);
                     if (next.has(ns)) next.delete(ns); else next.add(ns);
