@@ -28,6 +28,7 @@ export function getGroupLabel(group: string): string {
     'apps': 'Apps',
     'phones': 'Phones',
     'devices': 'Devices',
+    'ui': 'UI SFX',
   };
   return labels[group] ?? group.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
