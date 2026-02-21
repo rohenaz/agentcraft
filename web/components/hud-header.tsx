@@ -8,9 +8,11 @@ interface HudHeaderProps {
   onConfigureUISounds: () => void;
 }
 
-const UI_THEMES: { value: 'sc2' | 'wc3' | 'off'; label: string }[] = [
+const UI_THEMES: { value: 'sc2' | 'wc3' | 'ff7' | 'ff9' | 'off'; label: string }[] = [
   { value: 'sc2', label: 'SC2' },
   { value: 'wc3', label: 'WC3' },
+  { value: 'ff7', label: 'FF7' },
+  { value: 'ff9', label: 'FF9' },
   { value: 'off', label: 'OFF' },
 ];
 

@@ -23,6 +23,8 @@ const DEFAULT_ASSIGNMENTS: SoundAssignments = {
     uiSounds: {
       sc2: { hover: 'ui/sc-bigbox/set2-move.mp3', click: 'ui/sc2/click.mp3', error: 'ui/sc2/error.mp3' },
       wc3: { hover: 'ui/wc3/hover.mp3', click: 'ui/wc3/click.mp3', error: 'ui/wc3/error.mp3' },
+      ff7: { hover: 'ui/ff7/cursor-move.mp3', click: 'ui/ff7/cursor-confirm.mp3', error: 'ui/ff7/cursor-error.mp3', pageChange: 'ui/ff7/cursor-select.mp3' },
+      ff9: { hover: 'ui/ff9/menu-open.mp3', click: 'ui/ff9/cursor-confirm.mp3' },
     },
   },
 };
