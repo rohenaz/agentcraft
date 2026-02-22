@@ -43,8 +43,6 @@ claude plugin install agentcraft@rohenaz
 The `agentcraft` CLI manages sound packs:
 
 ```bash
-npm install -g agentcraft
-# or
 bun install -g agentcraft
 ```
 
@@ -55,6 +53,7 @@ agentcraft list                                    # list installed packs
 agentcraft update rohenaz/agentcraft-sounds        # update a pack (git pull)
 agentcraft update                                  # update all packs
 agentcraft remove rohenaz/agentcraft-sounds        # remove a pack
+agentcraft init my-sounds                          # scaffold a new pack repo
 ```
 
 ## Sound Packs
@@ -74,7 +73,64 @@ Packs live at `~/.agentcraft/packs/<publisher>/<name>/`. Each pack is a plain gi
 git clone https://github.com/publisher/name ~/.agentcraft/packs/publisher/name
 ```
 
-To create your own pack: make a GitHub repo with sound files, share the `publisher/name` slug. That's it — no registry, no manifest required.
+### Pack Structure
+
+Sounds are organized into directories — the dashboard reads depth dynamically:
+
+```
+my-sounds/
+  sc2/                          ← group tab
+    terran/                     ← sub-tab
+      session-start/            ← subcategory
+        scv-ready.mp3
+      task-complete/
+        marine-salute.mp3
+  ui/                           ← optional: dashboard UI theme sounds
+    sc2/
+      click.mp3
+      hover.mp3
+      confirm.mp3
+      error.mp3
+      pageChange.mp3
+```
+
+Any layout works — flat, mood-organized, game-organized. File names become display names in the browser (`scv-ready.mp3` → "Scv Ready"). Supported formats: `.mp3`, `.wav`, `.ogg`, `.m4a`.
+
+Add an optional `pack.json` at the root for display metadata:
+
+```json
+{
+  "name": "my-sounds",
+  "publisher": "your-github-username",
+  "version": "1.0.0",
+  "description": "Short description shown in the dashboard",
+  "types": ["sounds", "ui"]
+}
+```
+
+### Creating a Pack
+
+**Fastest path — scaffold with the CLI:**
+
+```bash
+agentcraft init my-sounds
+cd my-sounds
+# drop your audio files in, then push to GitHub
+```
+
+**Or ask your agent.** From any Claude Code session, say something like:
+
+> "Help me create a sound pack" or "scaffold a new agentcraft pack called my-sounds"
+
+The agent will invoke the `agentcraft:packs` skill and walk you through the whole process — directory structure, `pack.json`, and publishing.
+
+### Publishing
+
+1. Push the repo to GitHub
+2. Add the `agentcraft-pack` topic (repo **Settings → Topics**)
+3. Share the install command: `agentcraft add your-username/your-repo`
+
+The community registry picks up newly tagged repos every 6 hours. No approval required.
 
 ## Prerequisites
 

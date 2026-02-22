@@ -1,6 +1,6 @@
 ---
 name: agentcraft-packs
-description: This skill should be used when the user asks to "install a sound pack", "add a pack", "find sound packs", "publish a pack", "create a pack", "create-pack", "scaffold a pack", "share my sounds", "agentcraft pack install", "browse packs", "remove a pack", "update packs", or wants to know how the AgentCraft pack system works.
+description: This skill should be used when the user asks to "install a sound pack", "add a pack", "find sound packs", "publish a pack", "create a pack", "scaffold a pack", "scaffold a new agentcraft pack", "help me create a sound pack", "share my sounds", "agentcraft pack install", "browse packs", "remove a pack", "update packs", or wants to know how the AgentCraft pack system works.
 ---
 
 # AgentCraft Sound Packs
@@ -19,7 +19,7 @@ agentcraft list                                    # show installed packs
 agentcraft update rohenaz/agentcraft-sounds        # git pull one pack
 agentcraft update                                  # update all packs
 agentcraft remove publisher/repo-name              # uninstall
-agentcraft create-pack my-sounds                   # scaffold a new pack repo
+agentcraft init my-sounds                          # scaffold a new pack repo
 ```
 
 `agentcraft pack install publisher/repo-name` resolves to `https://github.com/publisher/repo-name` and clones into `~/.agentcraft/packs/publisher/repo-name/`.
@@ -75,7 +75,7 @@ Any GitHub repo with audio files (`.mp3`, `.wav`, `.ogg`, `.m4a`) is a valid pac
 ### Step 0: Scaffold with the CLI (fastest path)
 
 ```bash
-agentcraft create-pack my-sounds
+agentcraft init my-sounds
 ```
 
 This generates a ready-to-use pack directory with `pack.json`, `README.md`, example directories, and publishing instructions. Then drop your audio files in and push.

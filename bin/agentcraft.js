@@ -141,8 +141,8 @@ function packInit() {
 
 function createPack(name) {
   if (!name) {
-    console.error(c.red('Usage: agentcraft create-pack <name>'));
-    console.error(c.dim('  Example: agentcraft create-pack my-sounds'));
+    console.error(c.red('Usage: agentcraft init <name>'));
+    console.error(c.dim('  Example: agentcraft init my-sounds'));
     process.exit(1);
   }
   if (existsSync(name)) {
@@ -257,20 +257,20 @@ ${c.bold('AgentCraft')} — assign sounds to AI agent lifecycle events
 
 ${c.cyan('Usage:')}
   agentcraft init                       Set up AgentCraft (install pack + config)
+  agentcraft init <name>                Scaffold a new sound pack repo
   agentcraft add <publisher/name>       Install a sound pack from GitHub
   agentcraft remove <publisher/name>    Remove an installed pack
   agentcraft update [publisher/name]    Update a pack, or all packs if no arg given
   agentcraft list                       List installed packs
   agentcraft start                      Launch the dashboard (port 4040)
-  agentcraft create-pack <name>         Scaffold a new sound pack repo
 
 ${c.cyan('Examples:')}
   agentcraft init
+  agentcraft init my-sounds
   agentcraft add rohenaz/agentcraft-sounds
   agentcraft add publisher/custom-pack
   agentcraft update
   agentcraft list
-  agentcraft create-pack my-sounds
 
 ${c.dim('Packs are stored at: ~/.agentcraft/packs/<publisher>/<name>/')}
 ${c.dim('Any git repo cloned there is automatically discovered by the dashboard.')}
@@ -282,7 +282,8 @@ ${c.cyan('Install the Claude Code plugin:')}
 
 // Route commands
 if (cmd === 'init') {
-  packInit();
+  if (sub) createPack(sub);
+  else packInit();
 } else if (cmd === 'add') {
   if (!sub) { console.error(c.red('Usage: agentcraft add <publisher/name>')); process.exit(1); }
   packAdd(sub);
@@ -309,8 +310,6 @@ if (cmd === 'init') {
   execSync(`cd "${webDir}" && bun install --silent && bun dev --port 4040`, { stdio: 'inherit' });
 } else if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
   showHelp();
-} else if (cmd === 'create-pack') {
-  createPack(sub);
 } else if (cmd === 'pack') {
   // Legacy shim — print migration hint and route through
   const newCmd = sub === 'install' ? 'add' : sub;
