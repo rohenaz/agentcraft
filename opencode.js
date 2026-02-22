@@ -84,64 +84,23 @@ function isDuplicate(key) {
 // ── Three-tier sound lookup (matches Claude Code play-sound.sh) ─
 
 /**
- * Look up and play a sound using the same priority as Claude Code:
- *   1. Skill-specific (if skillKey provided)
- *   2. Global fallback
+ * Look up and play a sound from global assignments.
  *
- * Note: OpenCode events don't carry agent identity, so we skip the
- * agent-specific tier. Per-agent overrides configured in the dashboard
- * will still be honored by Claude Code; OpenCode uses global sounds.
+ * OpenCode events don't carry agent or skill identity, so only the
+ * global tier is used. Per-agent and per-skill overrides configured
+ * in the dashboard are stored in assignments.json and honored by
+ * Claude Code, but not available in OpenCode.
  */
-function playForEvent(assignmentKey, skillKey) {
+function playForEvent(assignmentKey) {
   const a = getAssignments();
   if (!a || a.settings?.enabled === false) return;
   const vol = a.settings?.masterVolume ?? 0.5;
-
-  let soundPath = null;
-
-  // 1. Skill-specific lookup
-  if (skillKey) {
-    const skillConfig = a.skills?.[skillKey];
-    if (skillConfig?.enabled !== false) {
-      soundPath = skillConfig?.hooks?.[assignmentKey] ?? null;
-    }
-  }
-
-  // 2. Global fallback
-  if (!soundPath) {
-    soundPath = a.global?.[assignmentKey] ?? null;
-  }
+  const soundPath = a.global?.[assignmentKey] ?? null;
 
   if (soundPath) {
-    debug(`play: event=${assignmentKey} skill=${skillKey ?? 'n/a'} sound=${soundPath}`);
+    debug(`play: event=${assignmentKey} sound=${soundPath}`);
     playSound(soundPath, vol);
   }
-}
-
-// ── Tool name → skill key resolution ────────────────────────────
-// In Claude Code, skill events fire when tool_name === "Skill" and
-// tool_input.skill carries the qualified name (e.g. "plugin:skill-name").
-//
-// In OpenCode, tool hooks fire for every tool execution. We need to
-// identify which tool calls are skill invocations and extract the key.
-//
-// OpenCode's Skill tool typically shows as tool name "Skill" or
-// "mcp_skill" with the skill name in the arguments. We try multiple
-// extraction strategies and log the raw shape for discovery.
-
-function extractSkillKey(toolName, args) {
-  // Strategy 1: Direct "Skill" tool (same as Claude Code)
-  if (toolName === 'Skill' || toolName === 'mcp_skill') {
-    // args.skill or args.name carries the qualified skill name
-    return args?.skill ?? args?.name ?? null;
-  }
-
-  // Strategy 2: Tool name contains "skill" (case-insensitive)
-  if (/skill/i.test(toolName)) {
-    return args?.skill ?? args?.name ?? toolName;
-  }
-
-  return null;
 }
 
 // ── Event mapping ───────────────────────────────────────────────
@@ -170,30 +129,15 @@ export const AgentCraft = async () => {
       }
     },
 
-    // Tool events — fires for every tool execution, but we only play
-    // sounds for skill invocations (matching Claude Code's Skill matcher).
+    // Tool events — debug logging only.
+    // OpenCode skills load as prompt context, not discrete tool calls,
+    // so there's no way to identify skill invocations from tool hooks.
     'tool.execute.before': async (input, output) => {
-      const toolName = input?.tool ?? '';
-      const args = output?.args ?? input?.args ?? {};
-
-      debug(`tool.before: tool=${toolName} input=${JSON.stringify(input).slice(0, 300)} output=${JSON.stringify(output).slice(0, 300)}`);
-
-      const skillKey = extractSkillKey(toolName, args);
-      if (skillKey && !isDuplicate(`skill:${skillKey}:PreToolUse`)) {
-        playForEvent('PreToolUse', skillKey);
-      }
+      debug(`tool.before: tool=${input?.tool} args=${JSON.stringify(output?.args ?? {}).slice(0, 200)}`);
     },
 
     'tool.execute.after': async (input, output) => {
-      const toolName = input?.tool ?? '';
-      const args = output?.args ?? input?.args ?? {};
-
-      debug(`tool.after: tool=${toolName} input=${JSON.stringify(input).slice(0, 300)} output=${JSON.stringify(output).slice(0, 300)}`);
-
-      const skillKey = extractSkillKey(toolName, args);
-      if (skillKey && !isDuplicate(`skill:${skillKey}:PostToolUse`)) {
-        playForEvent('PostToolUse', skillKey);
-      }
+      debug(`tool.after: tool=${input?.tool} args=${JSON.stringify(output?.args ?? {}).slice(0, 200)}`);
     },
   };
 };

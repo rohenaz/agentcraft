@@ -65,9 +65,11 @@ Then open `http://localhost:4040?client=opencode` in the browser.
 
 Both clients share the same `assignments.json` config. Sounds assigned in the dashboard work across both clients for supported events.
 
-**Supported by both**: SessionStart, SessionEnd, Stop, PreToolUse, PostToolUse, PostToolUseFailure, PreCompact
+**Supported by both**: SessionStart, SessionEnd, Stop, PostToolUseFailure, PreCompact
 
-**Claude Code only**: SubagentStop, Notification
+**Claude Code only**: SubagentStop, Notification, PreToolUse, PostToolUse (skill events)
+
+**Why no skill events in OpenCode**: OpenCode loads skills as prompt context, not as discrete tool calls. The `tool.execute` hooks only see actual tools (bash, read, edit, write), so there is no way to detect when a skill is invoked.
 
 **Per-agent overrides**: Claude Code only. OpenCode uses global sounds (agent identity is not available in OpenCode plugin events).
 
