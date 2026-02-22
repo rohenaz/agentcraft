@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react';
 import { HookSlot } from './hook-slot';
 import { AgentForm } from './agent-form';
+import { PacksPanel } from './packs-panel';
 import { playUISound } from '@/lib/ui-audio';
 import { getEventLabel } from '@/lib/utils';
 import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData, SelectMode } from '@/lib/types';
@@ -220,7 +221,7 @@ interface AgentRosterPanelProps {
 }
 
 export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange, selectMode, onSlotSelect }: AgentRosterPanelProps) {
-  const [activeView, setActiveView] = useState<'agents' | 'skills'>('agents');
+  const [activeView, setActiveView] = useState<'agents' | 'skills' | 'packs'>('agents');
   const [showForm, setShowForm] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentInfo | undefined>();
   const [skillSearch, setSkillSearch] = useState('');
@@ -341,7 +342,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
       {/* Tab bar header */}
       <div className="shrink-0 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
         <div className="flex items-stretch">
-          {(['agents', 'skills'] as const).map((view) => (
+          {(['agents', 'skills', 'packs'] as const).map((view) => (
             <button
               key={view}
               data-sf-hover
@@ -359,7 +360,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
                 backgroundColor: activeView === view ? 'rgba(0,229,255,0.04)' : 'transparent',
               }}
             >
-              {view === 'agents' ? 'AGENTS' : 'SKILLS'}
+              {view.toUpperCase()}
             </button>
           ))}
           {activeView === 'agents' && (
@@ -496,6 +497,8 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
             })}
           </>
         )}
+
+        {activeView === 'packs' && <PacksPanel />}
       </div>
     </div>
   );
