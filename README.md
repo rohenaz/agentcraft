@@ -1,8 +1,36 @@
 # AgentCraft
 
-Assign sounds to AI coding agent lifecycle events. Configure everything through an SC2-inspired dashboard — drag sounds onto hook slots, pick a UI theme, and hear your agents come alive.
+Assign sounds to your AI coding agent's lifecycle events. Configure everything through an SC2-inspired dashboard — drag sounds onto hook slots, pick a UI theme, and hear your agents come alive.
 
 Works with **Claude Code** and **OpenCode**.
+
+![AgentCraft dashboard](screenshot.jpg)
+
+## How It Works
+
+**1. Run the skill**
+
+From any Claude Code session:
+
+```
+/agentcraft
+```
+
+**2. Sounds download automatically**
+
+On first launch, AgentCraft clones the [agentcraft-sounds](https://github.com/rohenaz/agentcraft-sounds) library to `~/.agentcraft/sounds/`. No manual setup required.
+
+**3. The dashboard opens at `http://localhost:4040`**
+
+A local web UI starts in the background. It stays running between sessions so subsequent `/agentcraft` calls open instantly.
+
+**4. Assign sounds to hook points and skill calls**
+
+- **AGENTS tab** — Expand **GLOBAL OVERRIDE** or any agent row. Click a hook slot (SESSION START, STOP, TOOL FAILURE, etc.) to enter select mode, then click any sound in the browser to assign it. Or drag a sound card directly onto a slot.
+- **SKILLS tab** — Assign sounds to individual skill invocations. Each skill has an **ON INVOKE** and **ON COMPLETE** slot.
+- Hit **ESTABLISH UPLINK** to save.
+
+From then on, Claude Code plays your sounds automatically as it works — no dashboard needed.
 
 ## Install
 
@@ -10,53 +38,14 @@ Works with **Claude Code** and **OpenCode**.
 claude plugin install agentcraft@rohenaz
 ```
 
-Then open the dashboard from any Claude Code session:
-
-```
-/agentcraft
-```
-
-This starts the web UI at `http://localhost:4040` and opens it in your browser. On first run, the sound library is downloaded automatically to `~/.agentcraft/sounds/`.
-
 ## Prerequisites
 
 - [Bun](https://bun.sh) — runs the web UI
 - [jq](https://jqlang.github.io/jq/) — JSON parsing in the hook script
-- [git](https://git-scm.com) — for downloading the sound library on first run
+- [git](https://git-scm.com) — downloads the sound library on first run
 - macOS: `afplay` (built in) · Linux: `paplay` or `aplay`
 
-## Sound Library
-
-Sounds live at `~/.agentcraft/sounds/`. The library is cloned from [agentcraft-sounds](https://github.com/rohenaz/agentcraft-sounds) on first run. Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file you drop in there appears in the browser automatically.
-
-```
-~/.agentcraft/sounds/
-  sc2/                  StarCraft II sounds (terran, protoss, zerg)
-  wc3/                  Warcraft III sounds
-  ff7/                  Final Fantasy VII sounds
-  ff9/                  Final Fantasy IX sounds
-  apps/                 Nostalgic app sounds (AIM, ICQ, Winamp)
-  classic-os/           Mac and Windows startup/UI sounds
-  phones/               Nokia alerts, Motorola buttons, pager beeps
-  ui/                   UI theme sounds (hover, click, error per theme)
-```
-
-To update the library later:
-
-```bash
-git -C ~/.agentcraft/sounds pull
-```
-
-## Assigning Hook Sounds
-
-Hook sounds play when Claude Code fires lifecycle events.
-
-1. Open the **AGENTS** tab in the left sidebar
-2. Expand **GLOBAL OVERRIDE** or any agent row
-3. Click a hook slot to enter select mode, then click a sound in the browser — or drag a sound card directly onto a slot
-4. Hit **ESTABLISH UPLINK** to save
-
-### Hooks
+## Hooks
 
 | Event | When it fires |
 |-------|--------------|
@@ -69,15 +58,11 @@ Hook sounds play when Claude Code fires lifecycle events.
 | `PreToolUse (Skill)` | A skill is invoked |
 | `PostToolUse (Skill)` | A skill completes |
 
-You can set sounds globally (fires for all agents) or per-agent (overrides global for that agent only).
-
-## Assigning Skill Sounds
-
-Switch to the **SKILLS** tab to assign sounds to individual skill invocations. Each skill has two slots: **ON INVOKE** and **ON COMPLETE**.
+Sounds can be set globally (fires for all agents) or per-agent (overrides global for that agent).
 
 ## UI Sound Themes
 
-The header dropdown (UI SFX) controls ambient interface sounds that play as you use the dashboard itself. Pick a theme or set it to OFF.
+The **UI SFX** dropdown in the header controls ambient sounds that play as you use the dashboard. Click **⚙** to customize individual slots per theme.
 
 | Theme | Style |
 |-------|-------|
@@ -87,20 +72,13 @@ The header dropdown (UI SFX) controls ambient interface sounds that play as you 
 | FF9 | Final Fantasy IX — soft, minimal |
 | OFF | No UI sounds |
 
-### UI Sound Slots
+## Sound Library
 
-Click **⚙** next to the theme dropdown to customize individual slots:
+Sounds live at `~/.agentcraft/sounds/`. Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file you drop there appears in the browser automatically. To update the library:
 
-| Slot | Plays on |
-|------|----------|
-| HOVER | Mouse over interactive elements |
-| CLICK | Button press |
-| TOGGLE | Expand / collapse sidebar rows |
-| PAGE CHANGE | Tab and group navigation |
-| CONFIRM | Sound assigned, settings saved |
-| ERROR | Action failed |
-
-HOVER, CLICK, and ERROR have theme defaults (`ui/{theme}/{slot}.mp3`). The others (TOGGLE, PAGE CHANGE, CONFIRM) are silent unless explicitly assigned.
+```bash
+git -C ~/.agentcraft/sounds pull
+```
 
 ## Storage
 
@@ -108,7 +86,6 @@ HOVER, CLICK, and ERROR have theme defaults (`ui/{theme}/{slot}.mp3`). The other
 |------|----------|
 | `~/.agentcraft/assignments.json` | Your sound assignments |
 | `~/.agentcraft/sounds/` | Sound library |
-| `~/.agentcraft/waveforms.json` | Waveform cache |
 
 ## Managing the Plugin
 
@@ -116,5 +93,3 @@ HOVER, CLICK, and ERROR have theme defaults (`ui/{theme}/{slot}.mp3`). The other
 claude plugin update agentcraft@rohenaz     # Update to latest
 claude plugin uninstall agentcraft@rohenaz  # Remove
 ```
-
-The web UI is only needed for configuration — hooks run independently of the dashboard.
