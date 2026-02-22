@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { readFile, writeFile, mkdir } from 'fs/promises';
-import { join, dirname } from 'path';
-import { homedir } from 'os';
-
-const ASSIGNMENTS_PATH = join(homedir(), '.agentcraft', 'assignments.json');
+import { dirname } from 'path';
+import { ASSIGNMENTS_PATH } from '@/lib/packs';
 
 export async function GET() {
   try {
