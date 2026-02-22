@@ -15,6 +15,12 @@ interface SoundBrowserPanelProps {
   onClearSelectMode: () => void;
 }
 
+// Strip pack prefix from category: "publisher/name:sc2/terran" → "sc2/terran"
+function internalCat(category: string): string {
+  const idx = category.indexOf(':');
+  return idx === -1 ? category : category.slice(idx + 1);
+}
+
 export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, onSelectModeAssign, onClearSelectMode }: SoundBrowserPanelProps) {
   const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
@@ -31,12 +37,12 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
   }, []);
 
   const allGroups = useMemo(() => {
-    return [...new Set(sounds.map((s) => s.category.split('/')[0]))].sort();
+    return [...new Set(sounds.map((s) => internalCat(s.category).split('/')[0]))].sort();
   }, [sounds]);
 
   const groupCategories = useMemo(() => {
     return [...new Set(
-      sounds.filter((s) => s.category.split('/')[0] === activeGroup).map((s) => s.category)
+      sounds.filter((s) => internalCat(s.category).split('/')[0] === activeGroup).map((s) => s.category)
     )].sort();
   }, [sounds, activeGroup]);
 
@@ -131,7 +137,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
                   backgroundColor: effectiveCategory === cat ? 'rgba(0,229,255,0.05)' : 'transparent',
                 }}
               >
-                {getSubTabLabel(cat)}
+                {getSubTabLabel(internalCat(cat))}
               </button>
             ))}
           </div>
@@ -176,7 +182,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
           <div key={cat}>
             {isSearching && (
               <div className="text-[9px] uppercase tracking-widest mb-1 mt-3 px-1 first:mt-0" style={{ color: 'var(--sf-cyan)', opacity: 0.6 }}>
-                {cat.replace(/\//g, ' › ')}
+                {internalCat(cat).replace(/\//g, ' › ')}
               </div>
             )}
             {Object.entries(subcats).map(([subcat, catSounds]) => (
