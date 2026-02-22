@@ -1,6 +1,6 @@
 ---
 name: agentcraft-packs
-description: This skill should be used when the user asks to "install a sound pack", "add a pack", "find sound packs", "publish a pack", "create a pack", "share my sounds", "agentcraft pack install", "browse packs", "remove a pack", "update packs", or wants to know how the AgentCraft pack system works.
+description: This skill should be used when the user asks to "install a sound pack", "add a pack", "find sound packs", "publish a pack", "create a pack", "create-pack", "scaffold a pack", "share my sounds", "agentcraft pack install", "browse packs", "remove a pack", "update packs", or wants to know how the AgentCraft pack system works.
 ---
 
 # AgentCraft Sound Packs
@@ -19,6 +19,7 @@ agentcraft list                                    # show installed packs
 agentcraft update rohenaz/agentcraft-sounds        # git pull one pack
 agentcraft update                                  # update all packs
 agentcraft remove publisher/repo-name              # uninstall
+agentcraft create-pack my-sounds                   # scaffold a new pack repo
 ```
 
 `agentcraft pack install publisher/repo-name` resolves to `https://github.com/publisher/repo-name` and clones into `~/.agentcraft/packs/publisher/repo-name/`.
@@ -71,6 +72,14 @@ The hook script resolves this to the absolute path at runtime:
 
 Any GitHub repo with audio files (`.mp3`, `.wav`, `.ogg`, `.m4a`) is a valid pack. No manifest required — directory structure is the organization.
 
+### Step 0: Scaffold with the CLI (fastest path)
+
+```bash
+agentcraft create-pack my-sounds
+```
+
+This generates a ready-to-use pack directory with `pack.json`, `README.md`, example directories, and publishing instructions. Then drop your audio files in and push.
+
 ### Step 1: Organize the repo
 
 Recommended structure — group sounds into directories by game, theme, or purpose:
@@ -122,7 +131,7 @@ The registry GitHub Action runs every 6 hours and automatically picks up newly t
 ### Step 4: Share the install command
 
 ```bash
-agentcraft pack install your-username/your-repo-name
+agentcraft add your-username/your-repo-name
 ```
 
 That's the entire publish workflow — push to GitHub, tag it, done.

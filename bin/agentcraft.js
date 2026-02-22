@@ -2,7 +2,7 @@
 'use strict';
 
 const { execSync, spawnSync } = require('child_process');
-const { existsSync, readdirSync, rmSync, statSync, mkdirSync, readFileSync, copyFileSync, realpathSync } = require('fs');
+const { existsSync, readdirSync, rmSync, statSync, mkdirSync, readFileSync, writeFileSync, copyFileSync, realpathSync } = require('fs');
 const { join, dirname } = require('path');
 const { homedir } = require('os');
 
@@ -139,6 +139,105 @@ function packInit() {
   console.log(`  Browse packs: ${c.cyan('agentcraft list')}`);
 }
 
+function createPack(name) {
+  if (!name) {
+    console.error(c.red('Usage: agentcraft create-pack <name>'));
+    console.error(c.dim('  Example: agentcraft create-pack my-sounds'));
+    process.exit(1);
+  }
+  if (existsSync(name)) {
+    console.error(c.red(`✗ Directory already exists: ${name}`));
+    process.exit(1);
+  }
+
+  // Try to detect GitHub username from git config
+  let publisher = 'your-github-username';
+  try {
+    const gitUser = execSync('git config --global user.name 2>/dev/null', { encoding: 'utf-8' }).trim();
+    const gitEmail = execSync('git config --global github.user 2>/dev/null', { encoding: 'utf-8' }).trim();
+    if (gitEmail) publisher = gitEmail;
+    else if (gitUser) publisher = gitUser.toLowerCase().replace(/\s+/g, '-');
+  } catch { /* use default */ }
+
+  console.log(`→ Creating pack ${c.cyan(name)} ...`);
+
+  // Directory structure
+  ensureDir(join(name, 'sounds', 'session-start'));
+  ensureDir(join(name, 'sounds', 'task-complete'));
+  ensureDir(join(name, 'sounds', 'error'));
+  ensureDir(join(name, 'ui', 'my-theme'));
+
+  // pack.json
+  writeFileSync(join(name, 'pack.json'), JSON.stringify({
+    name,
+    publisher,
+    version: '1.0.0',
+    description: 'My AgentCraft sound pack',
+    types: ['sounds'],
+  }, null, 2) + '\n');
+
+  // .gitignore
+  writeFileSync(join(name, '.gitignore'), '.DS_Store\nThumbs.db\n');
+
+  // README.md
+  writeFileSync(join(name, 'README.md'), `# ${name}
+
+An [AgentCraft](https://github.com/rohenaz/agentcraft) sound pack.
+
+## Install
+
+\`\`\`bash
+agentcraft add ${publisher}/${name}
+\`\`\`
+
+Or manually:
+
+\`\`\`bash
+git clone https://github.com/${publisher}/${name} ~/.agentcraft/packs/${publisher}/${name}
+\`\`\`
+
+## Structure
+
+Drop \`.mp3\`, \`.wav\`, \`.ogg\`, or \`.m4a\` files into directories. The dashboard auto-discovers them:
+
+\`\`\`
+sounds/
+  session-start/     ← sounds here appear under "sounds > session start" group
+  task-complete/
+  error/
+ui/
+  my-theme/          ← optional: UI sounds for the dashboard itself
+    click.mp3
+    hover.mp3
+    confirm.mp3
+    error.mp3
+    pageChange.mp3
+\`\`\`
+
+Top-level directories become group tabs. Nested directories become sub-tabs and subcategories.
+Any layout works — organise however makes sense for your sounds.
+
+## Publishing
+
+1. Push this repo to GitHub as \`${publisher}/${name}\`
+2. Go to **Settings → Topics** and add the topic \`agentcraft-pack\`
+3. The community registry picks it up within 6 hours
+
+Users can then find and install it from the AgentCraft dashboard PACKS tab.
+`);
+
+  console.log(c.green(`✓ Created ${name}/`));
+  console.log('');
+  console.log('Next steps:');
+  console.log(`  1. Drop ${c.cyan('.mp3/.wav/.ogg')} files into the subdirectories`);
+  console.log(`  2. Push to GitHub as ${c.cyan(`${publisher}/${name}`)}`);
+  console.log(`  3. Add topic ${c.cyan('agentcraft-pack')} in GitHub Settings → Topics`);
+  console.log('');
+  console.log('Test locally before publishing:');
+  console.log(c.dim(`  git clone . ~/.agentcraft/packs/${publisher}/${name}`));
+  console.log(c.dim('  agentcraft start'));
+}
+
 function getWebDir() {
   if (process.env.CLAUDE_PLUGIN_ROOT) {
     return join(process.env.CLAUDE_PLUGIN_ROOT, 'web');
@@ -157,12 +256,13 @@ function showHelp() {
 ${c.bold('AgentCraft')} — assign sounds to AI agent lifecycle events
 
 ${c.cyan('Usage:')}
-  agentcraft init                    Set up AgentCraft (install pack + config)
-  agentcraft add <publisher/name>    Install a sound pack from GitHub
-  agentcraft remove <publisher/name> Remove an installed pack
-  agentcraft update [publisher/name] Update a pack, or all packs if no arg given
-  agentcraft list                    List installed packs
-  agentcraft start                   Launch the dashboard (port 4040)
+  agentcraft init                       Set up AgentCraft (install pack + config)
+  agentcraft add <publisher/name>       Install a sound pack from GitHub
+  agentcraft remove <publisher/name>    Remove an installed pack
+  agentcraft update [publisher/name]    Update a pack, or all packs if no arg given
+  agentcraft list                       List installed packs
+  agentcraft start                      Launch the dashboard (port 4040)
+  agentcraft create-pack <name>         Scaffold a new sound pack repo
 
 ${c.cyan('Examples:')}
   agentcraft init
@@ -170,6 +270,7 @@ ${c.cyan('Examples:')}
   agentcraft add publisher/custom-pack
   agentcraft update
   agentcraft list
+  agentcraft create-pack my-sounds
 
 ${c.dim('Packs are stored at: ~/.agentcraft/packs/<publisher>/<name>/')}
 ${c.dim('Any git repo cloned there is automatically discovered by the dashboard.')}
@@ -208,6 +309,8 @@ if (cmd === 'init') {
   execSync(`cd "${webDir}" && bun install --silent && bun dev --port 4040`, { stdio: 'inherit' });
 } else if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
   showHelp();
+} else if (cmd === 'create-pack') {
+  createPack(sub);
 } else if (cmd === 'pack') {
   // Legacy shim — print migration hint and route through
   const newCmd = sub === 'install' ? 'add' : sub;

@@ -12,15 +12,9 @@ kill $(lsof -ti:4040) 2>/dev/null
 echo "AgentCraft server stopped."
 ```
 
-Check if the official sound pack is installed:
+Run first-time setup (installs official pack + creates assignments.json if missing):
 ```bash
-ls ~/.agentcraft/packs/rohenaz/agentcraft-sounds 2>/dev/null | head -1
-```
-
-If that returned nothing (empty or missing), install it:
-```bash
-agentcraft pack install rohenaz/agentcraft-sounds 2>/dev/null || \
-  git clone https://github.com/rohenaz/agentcraft-sounds ~/.agentcraft/packs/rohenaz/agentcraft-sounds
+agentcraft init
 ```
 
 Check if server is already running:
