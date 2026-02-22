@@ -146,7 +146,7 @@ Find community packs three ways:
 
 ## UI Theme Sounds
 
-Packs can include a `ui/` directory with sounds that play as you use the AgentCraft dashboard (hover, click, page change, etc.). The dashboard's **UI SFX** dropdown lets users pick which pack's UI theme to use.
+Packs can include a `ui/` directory with sounds that play during dashboard interactions (hover, click, page change, etc.). The dashboard's **UI SFX** dropdown selects which pack's UI theme to use.
 
 Structure the `ui/` directory by theme name:
 
