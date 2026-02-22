@@ -18,7 +18,7 @@ From any Claude Code session:
 
 **2. Sounds download automatically**
 
-On first launch, AgentCraft clones the [agentcraft-sounds](https://github.com/rohenaz/agentcraft-sounds) library to `~/.agentcraft/sounds/`. No manual setup required.
+On first launch, AgentCraft installs the [agentcraft-sounds](https://github.com/rohenaz/agentcraft-sounds) pack to `~/.agentcraft/packs/rohenaz/agentcraft-sounds/`. No manual setup required.
 
 **3. The dashboard opens at `http://localhost:4040`**
 
@@ -38,11 +38,48 @@ From then on, Claude Code plays your sounds automatically as it works — no das
 claude plugin install agentcraft@rohenaz
 ```
 
+## CLI
+
+The `agentcraft` CLI manages sound packs:
+
+```bash
+npm install -g agentcraft
+# or
+bun install -g agentcraft
+```
+
+```bash
+agentcraft pack install rohenaz/agentcraft-sounds   # install a pack from GitHub
+agentcraft pack list                                # list installed packs
+agentcraft pack update rohenaz/agentcraft-sounds   # update a pack (git pull)
+agentcraft pack update --all                       # update all packs
+agentcraft pack remove rohenaz/agentcraft-sounds   # remove a pack
+```
+
+## Sound Packs
+
+Packs live at `~/.agentcraft/packs/<publisher>/<name>/`. Each pack is a plain git repo — installing is just a clone, updating is just a pull.
+
+```
+~/.agentcraft/packs/
+  rohenaz/
+    agentcraft-sounds/     ← official pack
+  you/
+    custom-pack/           ← any git repo cloned here works automatically
+```
+
+**Manual install** works identically to the CLI:
+```bash
+git clone https://github.com/publisher/name ~/.agentcraft/packs/publisher/name
+```
+
+To create your own pack: make a GitHub repo with sound files, share the `publisher/name` slug. That's it — no registry, no manifest required.
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) — runs the web UI
 - [jq](https://jqlang.github.io/jq/) — JSON parsing in the hook script
-- [git](https://git-scm.com) — downloads the sound library on first run
+- [git](https://git-scm.com) — downloads packs on install
 - macOS: `afplay` (built in) · Linux: `paplay` or `aplay`
 
 ## Hooks
@@ -72,20 +109,12 @@ The **UI SFX** dropdown in the header controls ambient sounds that play as you u
 | FF9 | Final Fantasy IX — soft, minimal |
 | OFF | No UI sounds |
 
-## Sound Library
-
-Sounds live at `~/.agentcraft/sounds/`. Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file you drop there appears in the browser automatically. To update the library:
-
-```bash
-git -C ~/.agentcraft/sounds pull
-```
-
 ## Storage
 
 | Path | Contents |
 |------|----------|
 | `~/.agentcraft/assignments.json` | Your sound assignments |
-| `~/.agentcraft/sounds/` | Sound library |
+| `~/.agentcraft/packs/` | Installed sound packs |
 
 ## Managing the Plugin
 
