@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { previewUISound } from '@/lib/ui-audio';
 import type { UITheme, UISlotMap } from '@/lib/types';
 
@@ -30,8 +30,8 @@ interface Props {
 
 export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
   const [sounds, setSounds] = useState<UISound[]>([]);
-  const [activeTheme, setActiveTheme] = useState<UITheme>(uiTheme === 'off' ? 'sc2' : uiTheme);
-  const [slots, setSlots] = useState<UISlotMap>(uiSounds[uiTheme === 'off' ? 'sc2' : uiTheme] ?? {});
+  const [activeTheme, setActiveTheme] = useState<string>(uiTheme === 'off' ? '' : uiTheme);
+  const [slots, setSlots] = useState<UISlotMap>(uiSounds[uiTheme === 'off' ? '' : uiTheme] ?? {});
   const [activeSlot, setActiveSlot] = useState<SlotName>('hover');
   const [playing, setPlaying] = useState<string | null>(null);
 
@@ -39,8 +39,20 @@ export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
     fetch('/api/ui-sounds').then((r) => r.json()).then(setSounds).catch(console.error);
   }, []);
 
+  // Derive available themes from loaded UI sounds data
+  const themes = useMemo(() => [...new Set(sounds.map((s) => s.group))].sort(), [sounds]);
+
+  // When themes load, initialize activeTheme to first available if current isn't in list
+  useEffect(() => {
+    if (themes.length > 0 && activeTheme === '') {
+      const initial = themes[0];
+      setActiveTheme(initial);
+      setSlots(uiSounds[initial] ?? {});
+    }
+  }, [themes, activeTheme, uiSounds]);
+
   // When theme changes, load existing slot config for that theme
-  const switchTheme = useCallback((theme: UITheme) => {
+  const switchTheme = useCallback((theme: string) => {
     setActiveTheme(theme);
     setSlots(uiSounds[theme] ?? {});
   }, [uiSounds]);
@@ -112,7 +124,7 @@ export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
         {/* Theme selector */}
         <div className="flex items-center gap-2 px-5 py-2 shrink-0" style={{ borderBottom: '1px solid var(--sf-border)' }}>
           <span className="text-[10px] tracking-widest uppercase opacity-40">THEME</span>
-          {(['sc2', 'wc3', 'ff7', 'ff9'] as const).map((t) => (
+          {themes.map((t) => (
             <button
               key={t}
               data-sf-hover

@@ -79,9 +79,9 @@ export default function Page() {
     await fetch('/api/preview', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ path }),
+      body: JSON.stringify({ path, volume: assignments.settings.masterVolume }),
     });
-  }, []);
+  }, [assignments.settings.masterVolume]);
 
   const handleSave = useCallback(async () => {
     await fetch('/api/assignments', {
@@ -97,6 +97,13 @@ export default function Page() {
     handleAssignmentChange({
       ...assignments,
       settings: { ...assignments.settings, enabled: !assignments.settings.enabled },
+    });
+  }, [assignments, handleAssignmentChange]);
+
+  const handleVolumeChange = useCallback((volume: number) => {
+    handleAssignmentChange({
+      ...assignments,
+      settings: { ...assignments.settings, masterVolume: volume },
     });
   }, [assignments, handleAssignmentChange]);
 
@@ -227,7 +234,7 @@ export default function Page() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen w-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--sf-bg)' }}>
-        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} onConfigureUISounds={() => setShowUISoundsModal(true)} />
+        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} onConfigureUISounds={() => setShowUISoundsModal(true)} masterVolume={assignments.settings.masterVolume ?? 1.0} onVolumeChange={handleVolumeChange} />
         <div className="flex-1 grid overflow-hidden" style={{ gridTemplateColumns: '288px 1fr 320px' }}>
           <AgentRosterPanel
             assignments={assignments}

@@ -21,7 +21,7 @@ export interface SkillConfig {
   hooks: Partial<Record<SkillHookEvent, string>>;
 }
 
-export type UITheme = 'sc2' | 'wc3' | 'ff7' | 'ff9' | 'off';
+export type UITheme = string; // Dynamic: derives from installed pack ui/ directory names; 'off' disables UI sounds
 
 export interface SelectMode {
   scope: string;  // 'global' | agent-name | 'skill/qualifiedName'

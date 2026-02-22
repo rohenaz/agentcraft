@@ -9,6 +9,8 @@ interface HudHeaderProps {
   uiTheme: UITheme;
   onUiThemeChange: (theme: UITheme) => void;
   onConfigureUISounds: () => void;
+  masterVolume: number;
+  onVolumeChange: (v: number) => void;
 }
 
 const UI_THEMES: { value: UITheme; label: string }[] = [
@@ -19,7 +21,7 @@ const UI_THEMES: { value: UITheme; label: string }[] = [
   { value: 'off', label: 'OFF' },
 ];
 
-export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds }: HudHeaderProps) {
+export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds, masterVolume, onVolumeChange }: HudHeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const activeLabel = UI_THEMES.find((t) => t.value === uiTheme)?.label ?? uiTheme.toUpperCase();
 
@@ -112,6 +114,26 @@ export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfi
           >
             ⚙
           </button>
+        </div>
+
+        <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+
+        {/* Master volume */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] tracking-widest uppercase opacity-40">VOL</span>
+          <input
+            type="range"
+            min={0}
+            max={100}
+            value={Math.round(masterVolume * 100)}
+            onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
+            data-no-ui-sound
+            className="w-16"
+            style={{ cursor: 'pointer', accentColor: 'var(--sf-cyan)', verticalAlign: 'middle' }}
+          />
+          <span className="text-[10px] w-7 text-right tabular-nums" style={{ color: 'var(--sf-cyan)', opacity: 0.7 }}>
+            {Math.round(masterVolume * 100)}%
+          </span>
         </div>
 
         <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />

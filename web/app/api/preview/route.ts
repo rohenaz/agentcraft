@@ -4,13 +4,14 @@ import { resolvePackPath } from '@/lib/packs';
 
 export async function POST(req: NextRequest) {
   try {
-    const { path } = await req.json();
+    const { path, volume } = await req.json();
     if (!path || typeof path !== 'string') {
       return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
     }
     const fullPath = resolvePackPath(path);
     if (!fullPath) return NextResponse.json({ error: 'Invalid path' }, { status: 400 });
-    spawn('afplay', [fullPath], { detached: true, stdio: 'ignore' }).unref();
+    const vol = typeof volume === 'number' && volume >= 0 && volume <= 1 ? volume : 1.0;
+    spawn('afplay', ['-v', String(vol), fullPath], { detached: true, stdio: 'ignore' }).unref();
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Playback failed' }, { status: 500 });

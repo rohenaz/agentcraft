@@ -17,6 +17,8 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 ENABLED=$(jq -r '.settings.enabled // true' "$CONFIG")
 [ "$ENABLED" = "false" ] && exit 0
 
+VOLUME=$(jq -r '.settings.masterVolume // 1' "$CONFIG")
+
 # Deduplicate: prevent the same event from firing within 3 seconds.
 # Claude Code fires SessionStart twice on resume (process init + session restore).
 LOCKFILE="/tmp/agentcraft-${EVENT}.lock"
@@ -70,9 +72,10 @@ fi
 [ ! -f "$FULL" ] && exit 0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  afplay "$FULL" &
+  afplay -v "$VOLUME" "$FULL" &
 elif command -v paplay &>/dev/null; then
-  paplay "$FULL" &
+  VOLUME_PAPLAY=$(awk "BEGIN{printf \"%d\", $VOLUME * 65536}")
+  paplay --volume="$VOLUME_PAPLAY" "$FULL" &
 elif command -v aplay &>/dev/null; then
   aplay "$FULL" &
 fi
