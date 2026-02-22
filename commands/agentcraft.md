@@ -37,5 +37,5 @@ done
 
 Then open in browser:
 ```bash
-open http://localhost:4040
+open "http://localhost:4040?client=claude-code"
 ```

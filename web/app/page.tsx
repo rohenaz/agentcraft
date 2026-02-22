@@ -10,6 +10,7 @@ import { SoundUnit } from '@/components/sound-unit';
 import type { SoundAsset, SoundAssignments, AgentInfo, SkillInfo, HookEvent, SkillHookEvent, UITheme, UISlotMap, SelectMode } from '@/lib/types';
 import { setUITheme, initGlobalUIListeners, playUISound } from '@/lib/ui-audio';
 import { UISoundsModal } from '@/components/ui-sounds-modal';
+import { useClient } from '@/lib/use-client';
 
 const DEFAULT_ASSIGNMENTS: SoundAssignments = {
   global: {},
@@ -39,6 +40,7 @@ export default function Page() {
   const [showUISoundsModal, setShowUISoundsModal] = useState(false);
   const [selectMode, setSelectMode] = useState<SelectMode | null>(null);
   const cleanupUIRef = useRef<(() => void) | null>(null);
+  const { clientId, client } = useClient();
 
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
@@ -234,7 +236,7 @@ export default function Page() {
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="h-screen w-screen overflow-hidden flex flex-col" style={{ backgroundColor: 'var(--sf-bg)' }}>
-        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} onConfigureUISounds={() => setShowUISoundsModal(true)} masterVolume={assignments.settings.masterVolume ?? 1.0} onVolumeChange={handleVolumeChange} />
+        <HudHeader enabled={assignments.settings.enabled} onToggle={handleToggleEnabled} uiTheme={assignments.settings.uiTheme ?? 'sc2'} onUiThemeChange={handleUiThemeChange} onConfigureUISounds={() => setShowUISoundsModal(true)} masterVolume={assignments.settings.masterVolume ?? 1.0} onVolumeChange={handleVolumeChange} clientLabel={client.id !== 'unknown' ? client.label : undefined} />
         <div className="flex-1 grid overflow-hidden" style={{ gridTemplateColumns: '288px 1fr 320px' }}>
           <AgentRosterPanel
             assignments={assignments}
@@ -245,6 +247,7 @@ export default function Page() {
             onAgentsChange={fetchAgents}
             selectMode={selectMode}
             onSlotSelect={setSelectMode}
+            client={client}
           />
           <SoundBrowserPanel
             sounds={sounds}
@@ -254,7 +257,7 @@ export default function Page() {
             onSelectModeAssign={handleSelectModeAssign}
             onClearSelectMode={() => setSelectMode(null)}
           />
-          <AssignmentLogPanel assignments={assignments} isDirty={isDirty} onClear={handleClearAssignment} onSave={handleSave} />
+          <AssignmentLogPanel assignments={assignments} isDirty={isDirty} onClear={handleClearAssignment} onSave={handleSave} client={client} />
         </div>
       </div>
       {showUISoundsModal && (

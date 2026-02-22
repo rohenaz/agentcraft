@@ -31,7 +31,7 @@ bun install -g agentcraft   # or: npm install -g agentcraft
 
 ### From the Dashboard
 
-Open the **PACKS** tab in the AgentCraft dashboard. Installed packs show UPDATE/REMOVE buttons. The **BROWSE PACKS** section fetches the community registry and shows packs not yet installed with an INSTALL button.
+Open the **PACKS** tab in the AgentCraft dashboard. When opening the dashboard, always pass the client identifier: `http://localhost:4040?client=claude-code` or `http://localhost:4040?client=opencode`. Installed packs show UPDATE/REMOVE buttons. The **BROWSE PACKS** section fetches the community registry and shows packs not yet installed with an INSTALL button.
 
 ### Manual Install (identical result)
 

@@ -1,7 +1,9 @@
 'use client';
 
 import { getEventLabel } from '@/lib/utils';
+import { ClientMappingsPanel } from './client-mappings-panel';
 import type { SoundAssignments, HookEvent } from '@/lib/types';
+import type { ClientCapabilities } from '@/lib/clients';
 
 interface AssignmentEntry {
   scope: string;
@@ -14,9 +16,10 @@ interface AssignmentLogPanelProps {
   isDirty: boolean;
   onClear: (scope: string, event: HookEvent) => void;
   onSave: () => void;
+  client?: ClientCapabilities | null;
 }
 
-export function AssignmentLogPanel({ assignments, isDirty, onClear, onSave }: AssignmentLogPanelProps) {
+export function AssignmentLogPanel({ assignments, isDirty, onClear, onSave, client }: AssignmentLogPanelProps) {
   const entries: AssignmentEntry[] = [];
 
   // Global entries
@@ -43,6 +46,11 @@ export function AssignmentLogPanel({ assignments, isDirty, onClear, onSave }: As
           </div>
         )}
       </div>
+
+      {/* Client mappings (shown when client is identified) */}
+      {client && client.id !== 'unknown' && (
+        <ClientMappingsPanel currentClient={client} />
+      )}
 
       {/* Assignment table */}
       <div className="flex-1 overflow-y-auto">

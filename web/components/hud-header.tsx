@@ -11,6 +11,7 @@ interface HudHeaderProps {
   onConfigureUISounds: () => void;
   masterVolume: number;
   onVolumeChange: (v: number) => void;
+  clientLabel?: string;
 }
 
 const UI_THEMES: { value: UITheme; label: string }[] = [
@@ -21,7 +22,7 @@ const UI_THEMES: { value: UITheme; label: string }[] = [
   { value: 'off', label: 'OFF' },
 ];
 
-export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds, masterVolume, onVolumeChange }: HudHeaderProps) {
+export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds, masterVolume, onVolumeChange, clientLabel }: HudHeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const activeLabel = UI_THEMES.find((t) => t.value === uiTheme)?.label ?? uiTheme.toUpperCase();
 
@@ -32,6 +33,22 @@ export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfi
           AGENTCRAFT
         </h1>
         <span className="text-xs opacity-40" style={{ color: 'var(--sf-cyan)' }}>v0.0.3</span>
+        {clientLabel && (
+          <>
+            <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+            <span
+              className="text-[10px] px-2 py-0.5 uppercase tracking-wider sf-heading"
+              style={{
+                border: '1px solid rgba(0,229,255,0.25)',
+                color: 'var(--sf-cyan)',
+                opacity: 0.7,
+                backgroundColor: 'rgba(0,229,255,0.04)',
+              }}
+            >
+              {clientLabel}
+            </span>
+          </>
+        )}
         <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
         <span className="text-xs opacity-60">AUDIO ASSIGNMENT TERMINAL</span>
       </div>

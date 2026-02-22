@@ -7,6 +7,7 @@ import { PacksPanel } from './packs-panel';
 import { playUISound } from '@/lib/ui-audio';
 import { getEventLabel } from '@/lib/utils';
 import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData, SelectMode } from '@/lib/types';
+import type { ClientCapabilities } from '@/lib/clients';
 
 const HOOK_GROUPS: { label: string; events: HookEvent[] }[] = [
   { label: 'LIFECYCLE', events: ['SessionStart', 'SessionEnd', 'Stop'] },
@@ -38,12 +39,15 @@ interface AgentRowProps {
   onDelete?: () => void;
   selectMode: SelectMode | null;
   onSlotSelect: (mode: SelectMode) => void;
+  client?: ClientCapabilities | null;
 }
 
-function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete, selectMode, onSlotSelect }: AgentRowProps) {
+function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete, selectMode, onSlotSelect, client }: AgentRowProps) {
   const [expanded, setExpanded] = useState(!!isGlobal);
   const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
+
+  const agentUnsupported = !isGlobal && client && client.id !== 'unknown' && !client.supportsAgentOverrides;
 
   return (
     <div className="mb-1">
@@ -56,6 +60,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
           backgroundColor: isGlobal
             ? isHovered ? 'rgba(255,192,0,0.08)' : 'rgba(255,192,0,0.04)'
             : isHovered ? 'rgba(0,229,255,0.04)' : 'transparent',
+          opacity: agentUnsupported ? 0.5 : 1,
         }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -69,6 +74,20 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
           >
             {label}
           </span>
+          {agentUnsupported && (
+            <span
+              className="text-[8px] px-1 py-px uppercase tracking-wider shrink-0"
+              style={{
+                border: '1px solid rgba(255,160,0,0.3)',
+                color: 'rgba(255,160,0,0.6)',
+                backgroundColor: 'rgba(255,160,0,0.05)',
+                lineHeight: '1.2',
+              }}
+              title={`${client.label} does not support per-agent overrides — uses global sounds only`}
+            >
+              GLOBAL ONLY
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <span className="text-[10px] opacity-40">{filledCount}/{ALL_EVENTS.length}</span>
@@ -122,6 +141,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
                   onPreview={onPreview}
                   selectMode={selectMode}
                   onSelect={() => onSlotSelect({ scope, event, label: getEventLabel(event) })}
+                  client={client}
                 />
               ))}
             </div>
@@ -143,9 +163,10 @@ interface SkillRowProps {
   onPreview: (path: string) => void;
   selectMode: SelectMode | null;
   onSlotSelect: (mode: SelectMode) => void;
+  client?: ClientCapabilities | null;
 }
 
-function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectMode, onSlotSelect }: SkillRowProps) {
+function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectMode, onSlotSelect, client }: SkillRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const filledCount = Object.values(hooks).filter(Boolean).length;
@@ -199,6 +220,8 @@ function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectM
               onPreview={onPreview}
               selectMode={selectMode}
               onSelect={() => onSlotSelect({ scope, event, label: SKILL_EVENT_LABELS[event] })}
+              client={client}
+              isSkillEvent
             />
           ))}
         </div>
@@ -218,9 +241,10 @@ interface AgentRosterPanelProps {
   onAgentsChange: () => void;
   selectMode: SelectMode | null;
   onSlotSelect: (mode: SelectMode) => void;
+  client?: ClientCapabilities | null;
 }
 
-export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange, selectMode, onSlotSelect }: AgentRosterPanelProps) {
+export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChange, onPreview, onAgentsChange, selectMode, onSlotSelect, client }: AgentRosterPanelProps) {
   const [activeView, setActiveView] = useState<'agents' | 'skills' | 'packs'>('agents');
   const [showForm, setShowForm] = useState(false);
   const [editingAgent, setEditingAgent] = useState<AgentInfo | undefined>();
@@ -400,6 +424,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
               onPreview={onPreview}
               selectMode={selectMode}
               onSlotSelect={onSlotSelect}
+              client={client}
             />
 
             {/* Per-agent rows */}
@@ -421,6 +446,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
                   onDelete={() => handleDeleteAgent(name)}
                   selectMode={selectMode}
                   onSlotSelect={onSlotSelect}
+                  client={client}
                 />
               );
             })}
@@ -489,6 +515,7 @@ export function AgentRosterPanel({ assignments, agents, skills, onAssignmentChan
                         onPreview={onPreview}
                         selectMode={selectMode}
                         onSlotSelect={onSlotSelect}
+                        client={client}
                       />
                     );
                   })}
