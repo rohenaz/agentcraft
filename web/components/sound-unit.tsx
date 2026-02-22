@@ -11,11 +11,12 @@ interface SoundUnitProps {
   onPreview: (path: string) => void;
   isOverlay?: boolean;
   onSelectAssign?: () => void; // if set, card click assigns instead of plays
+  packLabel?: string;          // shown when browsing multiple packs simultaneously
 }
 
 const BARS = 16;
 
-export function SoundUnit({ sound, isAssigned, onPreview, isOverlay, onSelectAssign }: SoundUnitProps) {
+export function SoundUnit({ sound, isAssigned, onPreview, isOverlay, onSelectAssign, packLabel }: SoundUnitProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [bars, setBars] = useState<number[]>(sound.waveform.map(h => h / 10));
@@ -198,6 +199,11 @@ export function SoundUnit({ sound, isAssigned, onPreview, isOverlay, onSelectAss
           <span className="shrink-0 text-[9px] animate-pulse" style={{ color: 'var(--sf-cyan)' }}>♪</span>
         )}
       </div>
+      {packLabel && (
+        <span className="text-[8px] truncate leading-none" style={{ color: 'rgba(255,192,0,0.45)' }}>
+          {packLabel}
+        </span>
+      )}
     </div>
   );
 }

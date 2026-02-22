@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { SoundUnit } from './sound-unit';
 import { groupSoundsByCategory, getGroupLabel, getSubTabLabel } from '@/lib/utils';
 import { playUISound } from '@/lib/ui-audio';
@@ -21,30 +21,53 @@ function internalCat(category: string): string {
   return idx === -1 ? category : category.slice(idx + 1);
 }
 
+// Extract pack ID: "publisher/name:sc2/terran" → "publisher/name"
+function packOfCat(category: string): string {
+  const idx = category.indexOf(':');
+  return idx === -1 ? '' : category.slice(0, idx);
+}
+
+// "publisher/name" → "name"
+function packShortName(packId: string): string {
+  return packId.split('/')[1] ?? packId;
+}
+
 export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, onSelectModeAssign, onClearSelectMode }: SoundBrowserPanelProps) {
+  const [activePack, setActivePack] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
   const [search, setSearch] = useState('');
 
-  const handleGroupChange = useCallback((group: string) => {
-    setActiveGroup(group);
-    playUISound('pageChange', 0.4);
-  }, []);
+  // All unique pack IDs present in the library
+  const allPacks = useMemo(() => {
+    return [...new Set(sounds.map((s) => packOfCat(s.category)))].filter(Boolean).sort();
+  }, [sounds]);
 
-  const handleCategoryChange = useCallback((cat: string) => {
-    setActiveCategory(cat);
-    playUISound('pageChange', 0.35);
-  }, []);
+  const showPackSelector = allPacks.length > 1;
+
+  // Sounds visible given the current pack filter
+  const visibleSounds = useMemo(() => {
+    if (!activePack) return sounds;
+    const prefix = activePack + ':';
+    return sounds.filter((s) => s.category.startsWith(prefix));
+  }, [sounds, activePack]);
 
   const allGroups = useMemo(() => {
-    return [...new Set(sounds.map((s) => internalCat(s.category).split('/')[0]))].sort();
-  }, [sounds]);
+    return [...new Set(visibleSounds.map((s) => internalCat(s.category).split('/')[0]))].sort();
+  }, [visibleSounds]);
+
+  // If activeGroup disappears after a pack switch, reset to the first available group
+  useEffect(() => {
+    if (allGroups.length > 0 && !allGroups.includes(activeGroup)) {
+      setActiveGroup(allGroups[0]);
+    }
+  }, [allGroups, activeGroup]);
 
   const groupCategories = useMemo(() => {
     return [...new Set(
-      sounds.filter((s) => internalCat(s.category).split('/')[0] === activeGroup).map((s) => s.category)
+      visibleSounds.filter((s) => internalCat(s.category).split('/')[0] === activeGroup).map((s) => s.category)
     )].sort();
-  }, [sounds, activeGroup]);
+  }, [visibleSounds, activeGroup]);
 
   // If activeCategory doesn't belong to current group, use first category of the group
   const effectiveCategory = groupCategories.includes(activeCategory)
@@ -64,21 +87,36 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
 
   const filteredSounds = useMemo(() => {
     if (isSearching) {
-      // Global search across all sounds
       const q = search.toLowerCase();
-      return sounds.filter((s) =>
+      return visibleSounds.filter((s) =>
         s.filename.toLowerCase().includes(q) ||
         s.category.toLowerCase().includes(q) ||
         s.subcategory.toLowerCase().includes(q)
       );
     }
-    // Normal tab-filtered view
-    return sounds.filter((s) => s.category === effectiveCategory);
-  }, [sounds, effectiveCategory, search, isSearching]);
+    return visibleSounds.filter((s) => s.category === effectiveCategory);
+  }, [visibleSounds, effectiveCategory, search, isSearching]);
 
   const grouped = useMemo(() => groupSoundsByCategory(filteredSounds), [filteredSounds]);
 
   const showSubTabs = !isSearching && groupCategories.length > 1;
+  // Show pack label on cards when browsing all packs and multiple packs are installed
+  const showPackBadge = showPackSelector && !activePack;
+
+  const handleGroupChange = useCallback((group: string) => {
+    setActiveGroup(group);
+    playUISound('pageChange', 0.4);
+  }, []);
+
+  const handleCategoryChange = useCallback((cat: string) => {
+    setActiveCategory(cat);
+    playUISound('pageChange', 0.35);
+  }, []);
+
+  const handlePackChange = useCallback((pack: string | null) => {
+    setActivePack(pack);
+    playUISound('pageChange', 0.4);
+  }, []);
 
   return (
     <div className="flex flex-col overflow-hidden" style={{ borderLeft: '1px solid var(--sf-border)', borderRight: '1px solid var(--sf-border)' }}>
@@ -102,6 +140,45 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
             boxShadow: isSearching ? '0 0 6px rgba(0,229,255,0.15)' : undefined,
           }}
         />
+
+        {/* SOURCE pack selector — only shown when 2+ packs installed */}
+        {showPackSelector && (
+          <div
+            className="flex items-center gap-1 mt-2 overflow-x-auto"
+            style={{ opacity: isSearching ? 0.3 : 1, pointerEvents: isSearching ? 'none' : 'auto' }}
+          >
+            <span className="text-[9px] tracking-widest uppercase shrink-0" style={{ color: 'var(--sf-gold)', opacity: 0.6 }}>
+              SOURCE
+            </span>
+            <button
+              data-sf-hover
+              onClick={() => handlePackChange(null)}
+              className="shrink-0 px-2 py-0.5 text-[9px] sf-heading font-semibold uppercase tracking-wider transition-all"
+              style={{
+                border: `1px solid ${!activePack ? 'var(--sf-gold)' : 'rgba(255,192,0,0.2)'}`,
+                color: !activePack ? 'var(--sf-gold)' : 'rgba(255,192,0,0.45)',
+                backgroundColor: !activePack ? 'rgba(255,192,0,0.08)' : 'transparent',
+              }}
+            >
+              ALL
+            </button>
+            {allPacks.map((id) => (
+              <button
+                key={id}
+                data-sf-hover
+                onClick={() => handlePackChange(id)}
+                className="shrink-0 px-2 py-0.5 text-[9px] sf-heading font-semibold uppercase tracking-wider transition-all"
+                style={{
+                  border: `1px solid ${activePack === id ? 'var(--sf-gold)' : 'rgba(255,192,0,0.2)'}`,
+                  color: activePack === id ? 'var(--sf-gold)' : 'rgba(255,192,0,0.45)',
+                  backgroundColor: activePack === id ? 'rgba(255,192,0,0.08)' : 'transparent',
+                }}
+              >
+                {packShortName(id)}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Group tabs */}
         <div className="flex gap-1 mt-2 overflow-x-auto" style={{ opacity: isSearching ? 0.3 : 1, pointerEvents: isSearching ? 'none' : 'auto' }}>
@@ -196,6 +273,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
                       isAssigned={assignedPaths.has(sound.path)}
                       onPreview={onPreview}
                       onSelectAssign={selectMode ? () => onSelectModeAssign(sound.path) : undefined}
+                      packLabel={showPackBadge ? packShortName(packOfCat(sound.category)) : undefined}
                     />
                   ))}
                 </div>
