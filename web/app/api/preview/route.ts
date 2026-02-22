@@ -3,7 +3,7 @@ import { spawn } from 'child_process';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const SOUND_LIBRARY = join(homedir(), 'code', 'claude-sounds');
+const SOUND_LIBRARY = join(homedir(), '.agentcraft', 'sounds');
 
 export async function POST(req: NextRequest) {
   try {

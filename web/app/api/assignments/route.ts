@@ -3,7 +3,7 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 
-const ASSIGNMENTS_PATH = join(homedir(), '.claude', 'sounds', 'assignments.json');
+const ASSIGNMENTS_PATH = join(homedir(), '.agentcraft', 'assignments.json');
 
 export async function GET() {
   try {

@@ -16,27 +16,21 @@ Then open the dashboard from any Claude Code session:
 /agentcraft
 ```
 
-This starts the web UI at `http://localhost:4040` and opens it in your browser.
+This starts the web UI at `http://localhost:4040` and opens it in your browser. On first run, the sound library is downloaded automatically to `~/.agentcraft/sounds/`.
 
 ## Prerequisites
 
 - [Bun](https://bun.sh) — runs the web UI
 - [jq](https://jqlang.github.io/jq/) — JSON parsing in the hook script
-- A sound library at `~/code/claude-sounds/` (see below)
+- [git](https://git-scm.com) — for downloading the sound library on first run
 - macOS: `afplay` (built in) · Linux: `paplay` or `aplay`
 
 ## Sound Library
 
-Clone the curated library to the expected location:
-
-```bash
-git clone https://github.com/rohenaz/claude-sounds ~/code/claude-sounds
-```
-
-Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file under `~/code/claude-sounds/` appears in the browser automatically, organized by subfolder. The library includes:
+Sounds live at `~/.agentcraft/sounds/`. The library is cloned from [agentcraft-sounds](https://github.com/rohenaz/agentcraft-sounds) on first run. Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file you drop in there appears in the browser automatically.
 
 ```
-~/code/claude-sounds/
+~/.agentcraft/sounds/
   sc2/                  StarCraft II sounds (terran, protoss, zerg)
   wc3/                  Warcraft III sounds
   ff7/                  Final Fantasy VII sounds
@@ -45,6 +39,12 @@ Any `.mp3`, `.wav`, `.ogg`, or `.m4a` file under `~/code/claude-sounds/` appears
   classic-os/           Mac and Windows startup/UI sounds
   phones/               Nokia alerts, Motorola buttons, pager beeps
   ui/                   UI theme sounds (hover, click, error per theme)
+```
+
+To update the library later:
+
+```bash
+git -C ~/.agentcraft/sounds pull
 ```
 
 ## Assigning Hook Sounds
@@ -102,13 +102,19 @@ Click **⚙** next to the theme dropdown to customize individual slots:
 
 HOVER, CLICK, and ERROR have theme defaults (`ui/{theme}/{slot}.mp3`). The others (TOGGLE, PAGE CHANGE, CONFIRM) are silent unless explicitly assigned.
 
+## Storage
+
+| Path | Contents |
+|------|----------|
+| `~/.agentcraft/assignments.json` | Your sound assignments |
+| `~/.agentcraft/sounds/` | Sound library |
+| `~/.agentcraft/waveforms.json` | Waveform cache |
+
 ## Managing the Plugin
 
 ```bash
 claude plugin update agentcraft@rohenaz     # Update to latest
 claude plugin uninstall agentcraft@rohenaz  # Remove
 ```
-
-Assignments are stored at `~/.claude/sounds/assignments.json`.
 
 The web UI is only needed for configuration — hooks run independently of the dashboard.

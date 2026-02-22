@@ -3,7 +3,7 @@ import { readFile } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const SOUND_LIBRARY = join(homedir(), 'code', 'claude-sounds');
+const SOUND_LIBRARY = join(homedir(), '.agentcraft', 'sounds');
 
 export async function GET(
   req: NextRequest,

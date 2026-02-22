@@ -1,12 +1,28 @@
 ---
-allowed-tools: Bash(lsof:*), Bash(open:*), Bash(bun:*), Bash(curl:*)
+allowed-tools: Bash(lsof:*), Bash(open:*), Bash(bun:*), Bash(curl:*), Bash(git:*), Bash(ls:*), Bash(mkdir:*)
 description: Open the AgentCraft sound assignment dashboard. Launches web UI on port 4040.
 argument-hint: "[--stop] Stop the AgentCraft server"
 ---
 
 Open the AgentCraft sound assignment dashboard.
 
-Check if server is running:
+If user passed --stop argument, kill the server instead:
+```bash
+kill $(lsof -ti:4040) 2>/dev/null
+echo "AgentCraft server stopped."
+```
+
+Otherwise, ensure the sound library is present. Check if ~/.agentcraft/sounds exists and has files:
+```bash
+ls ~/.agentcraft/sounds 2>/dev/null | head -1
+```
+
+If that returned nothing (empty or missing), clone the sound library:
+```bash
+git clone https://github.com/rohenaz/agentcraft-sounds ~/.agentcraft/sounds
+```
+
+Check if server is already running:
 ```bash
 lsof -ti:4040
 ```
@@ -27,9 +43,4 @@ done
 Then open in browser:
 ```bash
 open http://localhost:4040
-```
-
-If user passed --stop argument, kill the server instead:
-```bash
-kill $(lsof -ti:4040) 2>/dev/null
 ```

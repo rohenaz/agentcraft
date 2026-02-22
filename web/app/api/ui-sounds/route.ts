@@ -3,11 +3,11 @@ import { readdir, stat } from 'fs/promises';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const UI_DIR = join(homedir(), 'code', 'claude-sounds', 'ui');
+const UI_DIR = join(homedir(), '.agentcraft', 'sounds', 'ui');
 const AUDIO_EXTS = new Set(['.mp3', '.wav', '.ogg', '.m4a']);
 
 interface UISound {
-  path: string;     // relative to ~/code/claude-sounds/, e.g. "ui/sc2/click.mp3"
+  path: string;     // relative to ~/.agentcraft/sounds/, e.g. "ui/sc2/click.mp3"
   filename: string; // e.g. "click.mp3"
   group: string;    // e.g. "sc2"
 }

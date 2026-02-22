@@ -5,8 +5,8 @@ import { homedir } from 'os';
 import { spawnSync } from 'child_process';
 import type { SoundAsset } from '@/lib/types';
 
-const SOUND_LIBRARY = join(homedir(), 'code', 'claude-sounds');
-const WAVEFORM_CACHE = join(homedir(), '.claude', 'sounds', 'waveforms.json');
+const SOUND_LIBRARY = join(homedir(), '.agentcraft', 'sounds');
+const WAVEFORM_CACHE = join(homedir(), '.agentcraft', 'waveforms.json');
 const BARS = 16;
 const FALLBACK = [5, 7, 4, 9, 6, 8, 3, 7, 5, 8, 4, 6, 7, 5, 8, 4];
 

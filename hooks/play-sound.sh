@@ -1,7 +1,7 @@
 #!/bin/bash
 # AgentCraft hook - plays assigned sound for this event/agent/skill
-CONFIG="$HOME/.claude/sounds/assignments.json"
-LIBRARY="$HOME/code/claude-sounds"
+CONFIG="$HOME/.agentcraft/assignments.json"
+LIBRARY="$HOME/.agentcraft/sounds"
 
 # Read stdin with 2s timeout. 'timeout' isn't available by default on macOS,
 # so use perl's alarm() which is always present.
