@@ -12,6 +12,8 @@ interface UISound {
 
 type SlotName = 'click' | 'hover' | 'error' | 'pageChange' | 'toggle' | 'confirm';
 
+const CANONICAL_SLOTS = new Set(['click', 'hover', 'error', 'pageChange', 'toggle', 'confirm']);
+
 const SLOTS: { name: SlotName; label: string; desc: string }[] = [
   { name: 'hover', label: 'HOVER', desc: 'Mouse over interactive element' },
   { name: 'click', label: 'CLICK', desc: 'Button or card clicked' },
@@ -39,8 +41,20 @@ export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
     fetch('/api/ui-sounds').then((r) => r.json()).then(setSounds).catch(console.error);
   }, []);
 
-  // Derive available themes from loaded UI sounds data
-  const themes = useMemo(() => [...new Set(sounds.map((s) => s.group))].sort(), [sounds]);
+  // Derive theme tabs: a ui/ subdir qualifies as a theme only if it contains
+  // at least one file whose basename matches a canonical slot name.
+  // Folders starting with '_' are always excluded (utility library escape hatch).
+  const themes = useMemo(() => {
+    const validGroups = new Set(
+      sounds
+        .filter((s) => {
+          const base = s.filename.replace(/\.(mp3|wav|ogg|m4a)$/i, '');
+          return CANONICAL_SLOTS.has(base);
+        })
+        .map((s) => s.group)
+    );
+    return [...validGroups].filter((t) => t && !t.startsWith('_')).sort();
+  }, [sounds]);
 
   // When themes load, initialize activeTheme to first available if current isn't in list
   useEffect(() => {
@@ -122,14 +136,14 @@ export function UISoundsModal({ uiTheme, uiSounds, onSave, onClose }: Props) {
         </div>
 
         {/* Theme selector */}
-        <div className="flex items-center gap-2 px-5 py-2 shrink-0" style={{ borderBottom: '1px solid var(--sf-border)' }}>
-          <span className="text-[10px] tracking-widest uppercase opacity-40">THEME</span>
+        <div className="flex items-center gap-2 px-5 py-2 shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid var(--sf-border)' }}>
+          <span className="text-[10px] tracking-widest uppercase opacity-40 shrink-0">THEME</span>
           {themes.map((t) => (
             <button
               key={t}
               data-sf-hover
               onClick={() => switchTheme(t)}
-              className="px-3 py-0.5 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
+              className="shrink-0 px-3 py-0.5 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
               style={{
                 border: `1px solid ${activeTheme === t ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
                 color: activeTheme === t ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.35)',
