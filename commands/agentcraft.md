@@ -1,5 +1,5 @@
 ---
-allowed-tools: Bash(lsof:*), Bash(open:*), Bash(bun:*), Bash(curl:*), Bash(git:*), Bash(ls:*), Bash(mkdir:*)
+allowed-tools: Bash(lsof:*), Bash(open:*), Bash(bun:*), Bash(curl:*), Bash(git:*), Bash(ls:*), Bash(mkdir:*), Bash(agentcraft:*)
 description: Open the AgentCraft sound assignment dashboard. Launches web UI on port 4040.
 argument-hint: "[--stop] Stop the AgentCraft server"
 ---
@@ -12,14 +12,15 @@ kill $(lsof -ti:4040) 2>/dev/null
 echo "AgentCraft server stopped."
 ```
 
-Otherwise, ensure the sound library is present. Check if ~/.agentcraft/sounds exists and has files:
+Check if the official sound pack is installed:
 ```bash
-ls ~/.agentcraft/sounds 2>/dev/null | head -1
+ls ~/.agentcraft/packs/rohenaz/agentcraft-sounds 2>/dev/null | head -1
 ```
 
-If that returned nothing (empty or missing), clone the sound library:
+If that returned nothing (empty or missing), install it:
 ```bash
-git clone https://github.com/rohenaz/agentcraft-sounds ~/.agentcraft/sounds
+agentcraft pack install rohenaz/agentcraft-sounds 2>/dev/null || \
+  git clone https://github.com/rohenaz/agentcraft-sounds ~/.agentcraft/packs/rohenaz/agentcraft-sounds
 ```
 
 Check if server is already running:

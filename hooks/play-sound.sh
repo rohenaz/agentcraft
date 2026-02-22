@@ -1,7 +1,7 @@
 #!/bin/bash
 # AgentCraft hook - plays assigned sound for this event/agent/skill
 CONFIG="$HOME/.agentcraft/assignments.json"
-LIBRARY="$HOME/.agentcraft/sounds"
+PACKS="$HOME/.agentcraft/packs"
 
 # Read stdin with 2s timeout. 'timeout' isn't available by default on macOS,
 # so use perl's alarm() which is always present.
@@ -55,7 +55,18 @@ fi
 [ -z "$SOUND" ] && SOUND=$(jq -r --arg e "$EVENT" '.global[$e] // empty' "$CONFIG")
 [ -z "$SOUND" ] && exit 0
 
-FULL="$LIBRARY/$SOUND"
+# Resolve pack-prefixed path: "publisher/name:internal/path"
+if echo "$SOUND" | grep -q ':'; then
+  PACK_ID="${SOUND%%:*}"
+  INTERNAL="${SOUND#*:}"
+  PUBLISHER="${PACK_ID%%/*}"
+  PACKNAME="${PACK_ID##*/}"
+  FULL="$PACKS/$PUBLISHER/$PACKNAME/$INTERNAL"
+else
+  # Legacy path — fall back to rohenaz/agentcraft-sounds
+  FULL="$PACKS/rohenaz/agentcraft-sounds/$SOUND"
+fi
+
 [ ! -f "$FULL" ] && exit 0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
