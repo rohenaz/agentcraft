@@ -81,24 +81,37 @@ function isDuplicate(key) {
   return false;
 }
 
-// ── Three-tier sound lookup (matches Claude Code play-sound.sh) ─
+// ── Sound lookup ────────────────────────────────────────────────
 
 /**
- * Look up and play a sound from global assignments.
+ * Look up and play a sound with skill-specific -> global fallback.
  *
- * OpenCode events don't carry agent or skill identity, so only the
- * global tier is used. Per-agent and per-skill overrides configured
- * in the dashboard are stored in assignments.json and honored by
- * Claude Code, but not available in OpenCode.
+ * OpenCode events don't carry agent identity, so the agent-specific
+ * tier is skipped. Per-agent overrides in assignments.json are honored
+ * by Claude Code only.
  */
-function playForEvent(assignmentKey) {
+function playForEvent(assignmentKey, skillKey) {
   const a = getAssignments();
   if (!a || a.settings?.enabled === false) return;
   const vol = a.settings?.masterVolume ?? 0.5;
-  const soundPath = a.global?.[assignmentKey] ?? null;
+
+  let soundPath = null;
+
+  // 1. Skill-specific lookup
+  if (skillKey) {
+    const skillConfig = a.skills?.[skillKey];
+    if (skillConfig?.enabled !== false) {
+      soundPath = skillConfig?.hooks?.[assignmentKey] ?? null;
+    }
+  }
+
+  // 2. Global fallback
+  if (!soundPath) {
+    soundPath = a.global?.[assignmentKey] ?? null;
+  }
 
   if (soundPath) {
-    debug(`play: event=${assignmentKey} sound=${soundPath}`);
+    debug(`play: event=${assignmentKey} skill=${skillKey ?? 'global'} sound=${soundPath}`);
     playSound(soundPath, vol);
   }
 }
@@ -129,15 +142,33 @@ export const AgentCraft = async () => {
       }
     },
 
-    // Tool events — debug logging only.
-    // OpenCode skills load as prompt context, not discrete tool calls,
-    // so there's no way to identify skill invocations from tool hooks.
+    // Skill events — OpenCode fires tool="skill" with args.name
+    // containing the skill name (e.g. "ask-questions-if-underspecified").
+    // Only play sounds for skill tool calls, not bash/read/edit/write.
     'tool.execute.before': async (input, output) => {
-      debug(`tool.before: tool=${input?.tool} args=${JSON.stringify(output?.args ?? {}).slice(0, 200)}`);
+      const toolName = input?.tool ?? '';
+      const args = output?.args ?? input?.args ?? {};
+      debug(`tool.before: tool=${toolName} args=${JSON.stringify(args).slice(0, 200)}`);
+
+      if (toolName === 'skill' && args.name) {
+        const skillKey = args.name;
+        if (!isDuplicate(`skill:${skillKey}:PreToolUse`)) {
+          playForEvent('PreToolUse', skillKey);
+        }
+      }
     },
 
     'tool.execute.after': async (input, output) => {
-      debug(`tool.after: tool=${input?.tool} args=${JSON.stringify(output?.args ?? {}).slice(0, 200)}`);
+      const toolName = input?.tool ?? '';
+      const args = input?.args ?? output?.args ?? {};
+      debug(`tool.after: tool=${toolName} args=${JSON.stringify(args).slice(0, 200)}`);
+
+      if (toolName === 'skill' && args.name) {
+        const skillKey = args.name;
+        if (!isDuplicate(`skill:${skillKey}:PostToolUse`)) {
+          playForEvent('PostToolUse', skillKey);
+        }
+      }
     },
   };
 };
