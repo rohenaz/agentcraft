@@ -1,0 +1,13 @@
+# Images
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.webp
+
+# Internal planning docs
+docs/
+
+# Web build artifacts (not needed at install time)
+web/node_modules/
+web/.next/
