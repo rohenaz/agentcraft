@@ -12,12 +12,13 @@ Sound packs are git repos containing audio files. Any GitHub repo can be a pack 
 ### From the CLI
 
 ```bash
-agentcraft pack install rohenaz/agentcraft-sounds    # official pack
-agentcraft pack install publisher/repo-name           # any GitHub repo
-agentcraft pack list                                  # show installed packs
-agentcraft pack update rohenaz/agentcraft-sounds     # git pull
-agentcraft pack update --all                          # update everything
-agentcraft pack remove publisher/repo-name            # uninstall
+agentcraft init                                    # first-time setup
+agentcraft add rohenaz/agentcraft-sounds           # official pack
+agentcraft add publisher/repo-name                 # any GitHub repo
+agentcraft list                                    # show installed packs
+agentcraft update rohenaz/agentcraft-sounds        # git pull one pack
+agentcraft update                                  # update all packs
+agentcraft remove publisher/repo-name              # uninstall
 ```
 
 `agentcraft pack install publisher/repo-name` resolves to `https://github.com/publisher/repo-name` and clones into `~/.agentcraft/packs/publisher/repo-name/`.

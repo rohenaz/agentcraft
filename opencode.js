@@ -3,7 +3,10 @@
  *
  * Plays sounds on OpenCode lifecycle events using the same assignments.json
  * config as the Claude Code plugin. Shared config lives at:
- *   ~/.claude/sounds/assignments.json
+ *   ~/.agentcraft/assignments.json
+ *
+ * Packs are stored at:
+ *   ~/.agentcraft/packs/<publisher>/<name>/
  *
  * To install for OpenCode, symlink or copy this file to:
  *   ~/.config/opencode/plugins/agentcraft.js   (global)
@@ -15,24 +18,42 @@ import { execSync } from 'child_process';
 import { join } from 'path';
 import { homedir } from 'os';
 
-const CONFIG_PATH = join(homedir(), '.claude', 'sounds', 'assignments.json');
-const LIBRARY_PATH = join(homedir(), 'code', 'claude-sounds');
+const ASSIGNMENTS_PATH = join(homedir(), '.agentcraft', 'assignments.json');
+const PACKS_DIR = join(homedir(), '.agentcraft', 'packs');
 
 function getAssignments() {
   try {
-    return JSON.parse(readFileSync(CONFIG_PATH, 'utf8'));
+    return JSON.parse(readFileSync(ASSIGNMENTS_PATH, 'utf8'));
   } catch {
     return null;
   }
 }
 
+function resolvePackPath(soundPath) {
+  if (!soundPath) return null;
+  if (soundPath.includes(':')) {
+    // "publisher/name:internal/path/to/sound.mp3"
+    const colon = soundPath.indexOf(':');
+    const packId = soundPath.slice(0, colon);
+    const internal = soundPath.slice(colon + 1);
+    const slash = packId.indexOf('/');
+    const publisher = packId.slice(0, slash);
+    const name = packId.slice(slash + 1);
+    return join(PACKS_DIR, publisher, name, internal);
+  }
+  // Legacy path — resolve against official pack
+  return join(PACKS_DIR, 'rohenaz', 'agentcraft-sounds', soundPath);
+}
+
 function play(soundPath) {
-  if (!soundPath) return;
-  const full = join(LIBRARY_PATH, soundPath);
-  if (!existsSync(full)) return;
+  const full = resolvePackPath(soundPath);
+  if (!full || !existsSync(full)) return;
   try {
     if (process.platform === 'darwin') execSync(`afplay "${full}" &`, { stdio: 'ignore' });
-    else if (process.platform === 'linux') execSync(`paplay "${full}" &`, { stdio: 'ignore' });
+    else if (process.platform === 'linux') {
+      if (existsSync('/usr/bin/paplay')) execSync(`paplay "${full}" &`, { stdio: 'ignore' });
+      else execSync(`aplay "${full}" &`, { stdio: 'ignore' });
+    }
   } catch { /* non-blocking, ignore errors */ }
 }
 
@@ -62,7 +83,6 @@ export const AgentCraft = async () => {
     'tool.execute.before': async (input) => {
       const a = getAssignments();
       if (!a || a.settings?.enabled === false) return;
-
       if (input.tool === 'skill') {
         const key = input.args?.skill;
         if (!key) return;
@@ -75,7 +95,6 @@ export const AgentCraft = async () => {
     'tool.execute.after': async (input) => {
       const a = getAssignments();
       if (!a || a.settings?.enabled === false) return;
-
       if (input.tool === 'skill') {
         const key = input.args?.skill;
         if (!key) return;

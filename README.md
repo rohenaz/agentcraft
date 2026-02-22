@@ -49,11 +49,12 @@ bun install -g agentcraft
 ```
 
 ```bash
-agentcraft pack install rohenaz/agentcraft-sounds   # install a pack from GitHub
-agentcraft pack list                                # list installed packs
-agentcraft pack update rohenaz/agentcraft-sounds   # update a pack (git pull)
-agentcraft pack update --all                       # update all packs
-agentcraft pack remove rohenaz/agentcraft-sounds   # remove a pack
+agentcraft init                                    # first-time setup
+agentcraft add rohenaz/agentcraft-sounds           # install a pack from GitHub
+agentcraft list                                    # list installed packs
+agentcraft update rohenaz/agentcraft-sounds        # update a pack (git pull)
+agentcraft update                                  # update all packs
+agentcraft remove rohenaz/agentcraft-sounds        # remove a pack
 ```
 
 ## Sound Packs
