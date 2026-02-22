@@ -170,7 +170,8 @@ export const AgentCraft = async () => {
       }
     },
 
-    // Tool events — fires for every tool execution
+    // Tool events — fires for every tool execution, but we only play
+    // sounds for skill invocations (matching Claude Code's Skill matcher).
     'tool.execute.before': async (input, output) => {
       const toolName = input?.tool ?? '';
       const args = output?.args ?? input?.args ?? {};
@@ -178,17 +179,8 @@ export const AgentCraft = async () => {
       debug(`tool.before: tool=${toolName} input=${JSON.stringify(input).slice(0, 300)} output=${JSON.stringify(output).slice(0, 300)}`);
 
       const skillKey = extractSkillKey(toolName, args);
-
-      if (skillKey) {
-        // Skill-specific PreToolUse
-        if (!isDuplicate(`skill:${skillKey}:PreToolUse`)) {
-          playForEvent('PreToolUse', skillKey);
-        }
-      } else {
-        // Global PreToolUse for any tool execution
-        if (!isDuplicate('PreToolUse')) {
-          playForEvent('PreToolUse');
-        }
+      if (skillKey && !isDuplicate(`skill:${skillKey}:PreToolUse`)) {
+        playForEvent('PreToolUse', skillKey);
       }
     },
 
@@ -199,17 +191,8 @@ export const AgentCraft = async () => {
       debug(`tool.after: tool=${toolName} input=${JSON.stringify(input).slice(0, 300)} output=${JSON.stringify(output).slice(0, 300)}`);
 
       const skillKey = extractSkillKey(toolName, args);
-
-      if (skillKey) {
-        // Skill-specific PostToolUse
-        if (!isDuplicate(`skill:${skillKey}:PostToolUse`)) {
-          playForEvent('PostToolUse', skillKey);
-        }
-      } else {
-        // Global PostToolUse for any tool execution
-        if (!isDuplicate('PostToolUse')) {
-          playForEvent('PostToolUse');
-        }
+      if (skillKey && !isDuplicate(`skill:${skillKey}:PostToolUse`)) {
+        playForEvent('PostToolUse', skillKey);
       }
     },
   };

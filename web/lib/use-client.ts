@@ -1,24 +1,28 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { getClientCapabilities, type ClientCapabilities, type ClientId } from './clients';
+
+const DEFAULT = { clientId: 'unknown' as ClientId, client: getClientCapabilities(null) };
 
 /**
  * Read the `?client=` query parameter from the current URL.
  * Returns the client capabilities for the identified client.
  *
- * Usage: when Claude Code opens the dashboard, it passes `?client=claude-code`.
- * When OpenCode opens it, it passes `?client=opencode`.
- * If no param is present, returns 'unknown' (all events shown as supported).
+ * Uses useEffect to avoid SSR hydration mismatch — server always
+ * renders as 'unknown', client updates after mount.
  */
 export function useClient(): { clientId: ClientId; client: ClientCapabilities } {
-  return useMemo(() => {
-    if (typeof window === 'undefined') {
-      return { clientId: 'unknown' as ClientId, client: getClientCapabilities(null) };
-    }
+  const [result, setResult] = useState(DEFAULT);
+
+  useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const raw = params.get('client');
-    const client = getClientCapabilities(raw);
-    return { clientId: client.id, client };
+    if (raw) {
+      const client = getClientCapabilities(raw);
+      setResult({ clientId: client.id, client });
+    }
   }, []);
+
+  return result;
 }
