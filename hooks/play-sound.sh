@@ -33,6 +33,26 @@ echo "$NOW" > "$LOCKFILE"
 
 SOUND=""
 
+# pick_random_from_slot: given a jq expression result that may be a string or array,
+# pick one entry randomly. Outputs a single string.
+pick_random_from_slot() {
+  local RAW="$1"
+  [ -z "$RAW" ] && return
+  # Check if it's a JSON array
+  if echo "$RAW" | jq -e 'type == "array"' >/dev/null 2>&1; then
+    local LEN
+    LEN=$(echo "$RAW" | jq 'length')
+    [ "$LEN" -eq 0 ] && return
+    local IDX=$((RANDOM % LEN))
+    echo "$RAW" | jq -r ".[$IDX]"
+  else
+    # Scalar string — use jq -r to strip quotes, handle "null"
+    local VAL
+    VAL=$(echo "$RAW" | jq -r '. // empty')
+    echo "$VAL"
+  fi
+}
+
 # Skill-specific lookup: PreToolUse/PostToolUse when tool_name=Skill
 # tool_input.skill is the qualified name, e.g. "plugin-dev:hook-development" or "ask-gemini"
 if [ "$TOOL_NAME" = "Skill" ]; then
@@ -40,7 +60,8 @@ if [ "$TOOL_NAME" = "Skill" ]; then
   if [ -n "$SKILL_KEY" ]; then
     SKILL_ENABLED=$(jq -r --arg s "$SKILL_KEY" '.skills[$s].enabled // true' "$CONFIG")
     if [ "$SKILL_ENABLED" = "true" ]; then
-      SOUND=$(jq -r --arg s "$SKILL_KEY" --arg e "$EVENT" '.skills[$s].hooks[$e] // empty' "$CONFIG")
+      RAW_SLOT=$(jq --arg s "$SKILL_KEY" --arg e "$EVENT" '.skills[$s].hooks[$e] // empty' "$CONFIG")
+      SOUND=$(pick_random_from_slot "$RAW_SLOT")
     fi
   fi
 fi
@@ -49,12 +70,16 @@ fi
 if [ -z "$SOUND" ] && [ -n "$AGENT" ]; then
   AGENT_ENABLED=$(jq -r --arg a "$AGENT" '.agents[$a].enabled // true' "$CONFIG")
   if [ "$AGENT_ENABLED" = "true" ]; then
-    SOUND=$(jq -r --arg a "$AGENT" --arg e "$EVENT" '.agents[$a].hooks[$e] // empty' "$CONFIG")
+    RAW_SLOT=$(jq --arg a "$AGENT" --arg e "$EVENT" '.agents[$a].hooks[$e] // empty' "$CONFIG")
+    SOUND=$(pick_random_from_slot "$RAW_SLOT")
   fi
 fi
 
 # Global fallback
-[ -z "$SOUND" ] && SOUND=$(jq -r --arg e "$EVENT" '.global[$e] // empty' "$CONFIG")
+if [ -z "$SOUND" ]; then
+  RAW_SLOT=$(jq --arg e "$EVENT" '.global[$e] // empty' "$CONFIG")
+  SOUND=$(pick_random_from_slot "$RAW_SLOT")
+fi
 [ -z "$SOUND" ] && exit 0
 
 # Resolve pack-prefixed path: "publisher/name:internal/path"

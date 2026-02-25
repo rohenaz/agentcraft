@@ -5,6 +5,7 @@ import { SoundUnit } from './sound-unit';
 import { groupSoundsByCategory, getGroupLabel, getSubTabLabel } from '@/lib/utils';
 import { playUISound } from '@/lib/ui-audio';
 import type { SoundAsset, SoundAssignments, SelectMode } from '@/lib/types';
+import { useCompact } from '@/lib/use-compact';
 
 interface SoundBrowserPanelProps {
   sounds: SoundAsset[];
@@ -33,6 +34,7 @@ function packShortName(packId: string): string {
 }
 
 export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, onSelectModeAssign, onClearSelectMode }: SoundBrowserPanelProps) {
+  const compact = useCompact();
   const [activePack, setActivePack] = useState<string | null>(null);
   const [activeGroup, setActiveGroup] = useState<string>('sc2');
   const [activeCategory, setActiveCategory] = useState<string>('sc2/terran');
@@ -76,9 +78,17 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
 
   const assignedPaths = useMemo(() => {
     const paths = new Set<string>();
-    Object.values(assignments.global).forEach((p) => p && paths.add(p));
+    const addSlot = (slot: string | string[] | undefined) => {
+      if (!slot) return;
+      if (Array.isArray(slot)) slot.forEach((s) => s && paths.add(s));
+      else paths.add(slot);
+    };
+    Object.values(assignments.global).forEach(addSlot);
     Object.values(assignments.agents).forEach((a) => {
-      Object.values(a.hooks).forEach((p) => p && paths.add(p));
+      Object.values(a.hooks).forEach(addSlot);
+    });
+    Object.values(assignments.skills).forEach((s) => {
+      Object.values(s.hooks).forEach(addSlot);
     });
     return paths;
   }, [assignments]);
@@ -119,7 +129,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
   }, []);
 
   return (
-    <div className="flex flex-col overflow-hidden" style={{ borderLeft: '1px solid var(--sf-border)', borderRight: '1px solid var(--sf-border)' }}>
+    <div className="flex flex-col overflow-hidden" style={compact ? undefined : { borderLeft: '1px solid var(--sf-border)', borderRight: '1px solid var(--sf-border)' }}>
       {/* Header */}
       <div className="shrink-0 px-4 py-2 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
         <div className="sf-heading text-xs font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--sf-cyan)' }}>
@@ -265,7 +275,7 @@ export function SoundBrowserPanel({ sounds, assignments, onPreview, selectMode, 
             {Object.entries(subcats).map(([subcat, catSounds]) => (
               <div key={`${cat}/${subcat}`} className="mb-4">
                 {subcat && <div className="text-[10px] uppercase tracking-widest mb-2 opacity-40 px-1">{subcat.replace(/-/g, ' ')}</div>}
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-2">
                   {catSounds.map((sound) => (
                     <SoundUnit
                       key={sound.id}

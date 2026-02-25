@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { UITheme } from '@/lib/types';
+import { useCompact } from '@/lib/use-compact';
 
 interface HudHeaderProps {
   enabled: boolean;
@@ -24,150 +25,261 @@ const UI_THEMES: { value: UITheme; label: string }[] = [
 
 export function HudHeader({ enabled, onToggle, uiTheme, onUiThemeChange, onConfigureUISounds, masterVolume, onVolumeChange, clientLabel }: HudHeaderProps) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const compact = useCompact();
   const activeLabel = UI_THEMES.find((t) => t.value === uiTheme)?.label ?? uiTheme.toUpperCase();
 
   return (
-    <header className="shrink-0 flex items-center justify-between px-6 py-3 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
-      <div className="flex items-center gap-4">
-        <h1 className="sf-logo text-lg font-bold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
+    <header className="shrink-0 flex items-center justify-between px-4 py-2 border-b" style={{ borderColor: 'var(--sf-border)', backgroundColor: 'var(--sf-panel)' }}>
+      <div className="flex items-center gap-3 min-w-0">
+        <h1 className="sf-logo text-lg font-bold tracking-widest uppercase shrink-0" style={{ color: 'var(--sf-cyan)' }}>
           AGENTCRAFT
         </h1>
-        <span className="text-xs opacity-40" style={{ color: 'var(--sf-cyan)' }}>v0.0.3</span>
-        {clientLabel && (
+        {!compact && (
           <>
-            <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
-            <span
-              className="text-[10px] px-2 py-0.5 uppercase tracking-wider sf-heading"
-              style={{
-                border: '1px solid rgba(0,229,255,0.25)',
-                color: 'var(--sf-cyan)',
-                opacity: 0.7,
-                backgroundColor: 'rgba(0,229,255,0.04)',
-              }}
-            >
-              {clientLabel}
-            </span>
+            <span className="text-xs opacity-40 shrink-0" style={{ color: 'var(--sf-cyan)' }}>v0.0.3</span>
+            {clientLabel && (
+              <>
+                <div className="h-4 w-px opacity-20 shrink-0" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+                <span
+                  className="text-[10px] px-2 py-0.5 uppercase tracking-wider sf-heading shrink-0"
+                  style={{
+                    border: '1px solid rgba(0,229,255,0.25)',
+                    color: 'var(--sf-cyan)',
+                    opacity: 0.7,
+                    backgroundColor: 'rgba(0,229,255,0.04)',
+                  }}
+                >
+                  {clientLabel}
+                </span>
+              </>
+            )}
+            <div className="h-4 w-px opacity-20 shrink-0" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+            <span className="text-xs opacity-60 truncate">AUDIO ASSIGNMENT TERMINAL</span>
           </>
         )}
-        <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
-        <span className="text-xs opacity-60">AUDIO ASSIGNMENT TERMINAL</span>
       </div>
 
-      <div className="flex items-center gap-4">
-        {/* UI sound theme dropdown */}
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] tracking-widest uppercase opacity-40">UI SFX</span>
-
-          <div className="relative">
-            {/* Click-away overlay */}
-            {showDropdown && (
-              <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
-            )}
-
-            {/* Trigger */}
-            <button
-              data-sf-hover
-              data-no-ui-sound
-              onClick={() => setShowDropdown(!showDropdown)}
-              className="flex items-center gap-1.5 px-3 py-0.5 text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
-              style={{
-                position: 'relative',
-                zIndex: 11,
-                border: `1px solid ${showDropdown ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
-                color: uiTheme === 'off' ? 'rgba(255,255,255,0.3)' : 'var(--sf-cyan)',
-                backgroundColor: showDropdown ? 'rgba(0,229,255,0.08)' : 'transparent',
-                minWidth: '3.5rem',
-              }}
-            >
-              <span>{activeLabel}</span>
-              <span style={{ opacity: 0.5 }}>{showDropdown ? '▴' : '▾'}</span>
-            </button>
-
-            {/* Dropdown */}
-            {showDropdown && (
-              <div
-                className="absolute right-0 top-full mt-1"
+      <div className="flex items-center gap-3 shrink-0">
+        {compact ? (
+          /* Compact: settings menu + toggle */
+          <>
+            <div className="relative">
+              {showMenu && (
+                <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              )}
+              <button
+                data-sf-hover
+                onClick={() => setShowMenu(!showMenu)}
+                className="px-2 py-0.5 text-[10px] sf-heading font-medium transition-all"
                 style={{
-                  zIndex: 20,
-                  border: '1px solid var(--sf-border)',
-                  backgroundColor: 'var(--sf-panel)',
-                  boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
-                  minWidth: '5rem',
+                  position: 'relative',
+                  zIndex: 11,
+                  border: `1px solid ${showMenu ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+                  color: showMenu ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+                  backgroundColor: showMenu ? 'rgba(0,229,255,0.08)' : 'transparent',
                 }}
               >
-                {UI_THEMES.map((t, i) => (
+                {showMenu ? '✕' : '⚙'}
+              </button>
+
+              {showMenu && (
+                <div
+                  className="absolute right-0 top-full mt-1 p-3 flex flex-col gap-3"
+                  style={{
+                    zIndex: 20,
+                    border: '1px solid var(--sf-border)',
+                    backgroundColor: 'var(--sf-panel)',
+                    boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+                    minWidth: '10rem',
+                  }}
+                >
+                  {/* UI SFX theme */}
+                  <div>
+                    <span className="text-[9px] tracking-widest uppercase opacity-40 block mb-1.5">UI SFX</span>
+                    <div className="flex gap-1 flex-wrap">
+                      {UI_THEMES.map((t) => (
+                        <button
+                          key={t.value}
+                          data-sf-hover
+                          onClick={() => onUiThemeChange(t.value)}
+                          className="px-2 py-0.5 text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
+                          style={{
+                            border: `1px solid ${uiTheme === t.value ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+                            color: uiTheme === t.value ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+                            backgroundColor: uiTheme === t.value ? 'rgba(0,229,255,0.08)' : 'transparent',
+                          }}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Configure */}
                   <button
-                    key={t.value}
                     data-sf-hover
-                    onClick={() => {
-                      onUiThemeChange(t.value);
-                      setShowDropdown(false);
-                    }}
-                    className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
+                    onClick={() => { onConfigureUISounds(); setShowMenu(false); }}
+                    className="w-full text-left px-2 py-1 text-[10px] sf-heading uppercase tracking-wider transition-all"
                     style={{
-                      color: uiTheme === t.value ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.5)',
-                      backgroundColor: uiTheme === t.value ? 'rgba(0,229,255,0.08)' : 'transparent',
-                      borderBottom: i < UI_THEMES.length - 1 ? '1px solid var(--sf-border)' : 'none',
+                      border: '1px solid var(--sf-border)',
+                      color: 'rgba(255,255,255,0.5)',
                     }}
                   >
-                    <span style={{ opacity: uiTheme === t.value ? 1 : 0 }}>▸</span>
-                    {t.label}
+                    Configure Sounds
                   </button>
-                ))}
+
+                  {/* Volume */}
+                  <div>
+                    <span className="text-[9px] tracking-widest uppercase opacity-40 block mb-1.5">VOLUME</span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={Math.round(masterVolume * 100)}
+                        onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
+                        data-no-ui-sound
+                        className="flex-1"
+                        style={{ cursor: 'pointer', accentColor: 'var(--sf-cyan)', verticalAlign: 'middle' }}
+                      />
+                      <span className="text-[10px] w-7 text-right tabular-nums" style={{ color: 'var(--sf-cyan)', opacity: 0.7 }}>
+                        {Math.round(masterVolume * 100)}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={onToggle}
+              className="flex items-center gap-1.5 px-3 py-1 text-[10px] sf-heading font-semibold uppercase tracking-wider transition-all"
+              style={{
+                border: `1px solid ${enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.2)'}`,
+                color: enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+                backgroundColor: enabled ? 'rgba(0,229,255,0.08)' : 'transparent',
+              }}
+            >
+              <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: enabled ? 'var(--sf-green)' : 'rgba(255,255,255,0.2)' }} />
+              {enabled ? 'ON' : 'OFF'}
+            </button>
+          </>
+        ) : (
+          /* Desktop: full controls */
+          <>
+            {/* UI sound theme dropdown */}
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] tracking-widest uppercase opacity-40">UI SFX</span>
+
+              <div className="relative">
+                {showDropdown && (
+                  <div className="fixed inset-0 z-10" onClick={() => setShowDropdown(false)} />
+                )}
+
+                <button
+                  data-sf-hover
+                  data-no-ui-sound
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="flex items-center gap-1.5 px-3 py-0.5 text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
+                  style={{
+                    position: 'relative',
+                    zIndex: 11,
+                    border: `1px solid ${showDropdown ? 'var(--sf-cyan)' : 'var(--sf-border)'}`,
+                    color: uiTheme === 'off' ? 'rgba(255,255,255,0.3)' : 'var(--sf-cyan)',
+                    backgroundColor: showDropdown ? 'rgba(0,229,255,0.08)' : 'transparent',
+                    minWidth: '3.5rem',
+                  }}
+                >
+                  <span>{activeLabel}</span>
+                  <span style={{ opacity: 0.5 }}>{showDropdown ? '▴' : '▾'}</span>
+                </button>
+
+                {showDropdown && (
+                  <div
+                    className="absolute right-0 top-full mt-1"
+                    style={{
+                      zIndex: 20,
+                      border: '1px solid var(--sf-border)',
+                      backgroundColor: 'var(--sf-panel)',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
+                      minWidth: '5rem',
+                    }}
+                  >
+                    {UI_THEMES.map((t, i) => (
+                      <button
+                        key={t.value}
+                        data-sf-hover
+                        onClick={() => {
+                          onUiThemeChange(t.value);
+                          setShowDropdown(false);
+                        }}
+                        className="w-full flex items-center gap-1.5 px-3 py-1.5 text-left text-[10px] sf-heading font-medium uppercase tracking-wider transition-all"
+                        style={{
+                          color: uiTheme === t.value ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.5)',
+                          backgroundColor: uiTheme === t.value ? 'rgba(0,229,255,0.08)' : 'transparent',
+                          borderBottom: i < UI_THEMES.length - 1 ? '1px solid var(--sf-border)' : 'none',
+                        }}
+                      >
+                        <span style={{ opacity: uiTheme === t.value ? 1 : 0 }}>▸</span>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Configure gear */}
-          <button
-            data-sf-hover
-            onClick={onConfigureUISounds}
-            title="Configure UI sound assignments"
-            className="px-2 py-0.5 text-[10px] sf-heading font-medium transition-all"
-            style={{
-              border: '1px solid var(--sf-border)',
-              color: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            ⚙
-          </button>
-        </div>
+              <button
+                data-sf-hover
+                onClick={onConfigureUISounds}
+                title="Configure UI sound assignments"
+                className="px-2 py-0.5 text-[10px] sf-heading font-medium transition-all"
+                style={{
+                  border: '1px solid var(--sf-border)',
+                  color: 'rgba(255,255,255,0.35)',
+                }}
+              >
+                ⚙
+              </button>
+            </div>
 
-        <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+            <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
 
-        {/* Master volume */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] tracking-widest uppercase opacity-40">VOL</span>
-          <input
-            type="range"
-            min={0}
-            max={100}
-            value={Math.round(masterVolume * 100)}
-            onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
-            data-no-ui-sound
-            className="w-16"
-            style={{ cursor: 'pointer', accentColor: 'var(--sf-cyan)', verticalAlign: 'middle' }}
-          />
-          <span className="text-[10px] w-7 text-right tabular-nums" style={{ color: 'var(--sf-cyan)', opacity: 0.7 }}>
-            {Math.round(masterVolume * 100)}%
-          </span>
-        </div>
+            {/* Master volume */}
+            <div className="flex items-center gap-1.5">
+              <span className="text-[10px] tracking-widest uppercase opacity-40">VOL</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={Math.round(masterVolume * 100)}
+                onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
+                data-no-ui-sound
+                className="w-16"
+                style={{ cursor: 'pointer', accentColor: 'var(--sf-cyan)', verticalAlign: 'middle' }}
+              />
+              <span className="text-[10px] w-7 text-right tabular-nums" style={{ color: 'var(--sf-cyan)', opacity: 0.7 }}>
+                {Math.round(masterVolume * 100)}%
+              </span>
+            </div>
 
-        <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
+            <div className="h-4 w-px opacity-20" style={{ backgroundColor: 'var(--sf-cyan)' }} />
 
-        {/* Master enable/disable */}
-        <button
-          onClick={onToggle}
-          className="flex items-center gap-2 px-4 py-1 text-xs sf-heading font-semibold uppercase tracking-wider transition-all"
-          style={{
-            border: `1px solid ${enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.2)'}`,
-            color: enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
-            backgroundColor: enabled ? 'rgba(0,229,255,0.08)' : 'transparent',
-          }}
-        >
-          <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: enabled ? 'var(--sf-green)' : 'rgba(255,255,255,0.2)' }} />
-          {enabled ? 'ONLINE' : 'OFFLINE'}
-        </button>
+            {/* Master enable/disable */}
+            <button
+              onClick={onToggle}
+              className="flex items-center gap-2 px-4 py-1 text-xs sf-heading font-semibold uppercase tracking-wider transition-all"
+              style={{
+                border: `1px solid ${enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.2)'}`,
+                color: enabled ? 'var(--sf-cyan)' : 'rgba(255,255,255,0.4)',
+                backgroundColor: enabled ? 'rgba(0,229,255,0.08)' : 'transparent',
+              }}
+            >
+              <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: enabled ? 'var(--sf-green)' : 'rgba(255,255,255,0.2)' }} />
+              {enabled ? 'ONLINE' : 'OFFLINE'}
+            </button>
+          </>
+        )}
       </div>
     </header>
   );

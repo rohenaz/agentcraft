@@ -1,7 +1,7 @@
 {
   "name": "agentcraft",
-  "version": "0.1.4",
-  "description": "Assign sounds to AI coding agent lifecycle events. Works with Claude Code and OpenCode.",
+  "version": "0.1.6",
+  "description": "Assign sounds to AI coding agent lifecycle events. Works with Claude Code, OpenCode, and Pi.",
   "author": { "name": "rohenaz" },
-  "keywords": ["sounds", "hooks", "audio", "productivity", "opencode", "claude-code"]
+  "keywords": ["sounds", "hooks", "audio", "productivity", "opencode", "claude-code", "pi"]
 }

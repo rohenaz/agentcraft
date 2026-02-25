@@ -1,36 +1,56 @@
 'use client';
 
-import { getEventLabel } from '@/lib/utils';
+import { getEventLabel, normalizeSlot } from '@/lib/utils';
 import { ClientMappingsPanel } from './client-mappings-panel';
 import type { SoundAssignments, HookEvent } from '@/lib/types';
 import type { ClientCapabilities } from '@/lib/clients';
+import { useCompact } from '@/lib/use-compact';
 
 interface AssignmentEntry {
   scope: string;
   event: HookEvent;
   sound: string;
+  /** Total sounds in this slot (for display) */
+  slotTotal: number;
 }
 
 interface AssignmentLogPanelProps {
   assignments: SoundAssignments;
   isDirty: boolean;
-  onClear: (scope: string, event: HookEvent) => void;
+  onClear: (scope: string, event: HookEvent, soundPath?: string) => void;
   onSave: () => void;
   client?: ClientCapabilities | null;
 }
 
 export function AssignmentLogPanel({ assignments, isDirty, onClear, onSave, client }: AssignmentLogPanelProps) {
+  const compact = useCompact();
   const entries: AssignmentEntry[] = [];
 
-  // Global entries
-  for (const [event, sound] of Object.entries(assignments.global)) {
-    if (sound) entries.push({ scope: 'GLOBAL', event: event as HookEvent, sound });
+  // Global entries — expand arrays into individual rows
+  for (const [event, slot] of Object.entries(assignments.global)) {
+    const sounds = normalizeSlot(slot);
+    for (const sound of sounds) {
+      entries.push({ scope: 'GLOBAL', event: event as HookEvent, sound, slotTotal: sounds.length });
+    }
   }
 
-  // Agent entries
+  // Agent entries — expand arrays into individual rows
   for (const [agentName, config] of Object.entries(assignments.agents)) {
-    for (const [event, sound] of Object.entries(config.hooks)) {
-      if (sound) entries.push({ scope: agentName, event: event as HookEvent, sound });
+    for (const [event, slot] of Object.entries(config.hooks)) {
+      const sounds = normalizeSlot(slot);
+      for (const sound of sounds) {
+        entries.push({ scope: agentName, event: event as HookEvent, sound, slotTotal: sounds.length });
+      }
+    }
+  }
+
+  // Skill entries — expand arrays into individual rows
+  for (const [skillName, config] of Object.entries(assignments.skills)) {
+    for (const [event, slot] of Object.entries(config.hooks)) {
+      const sounds = normalizeSlot(slot);
+      for (const sound of sounds) {
+        entries.push({ scope: `skill/${skillName}`, event: event as HookEvent, sound, slotTotal: sounds.length });
+      }
     }
   }
 
@@ -73,20 +93,26 @@ export function AssignmentLogPanel({ assignments, isDirty, onClear, onSave, clie
                   className="border-b transition-all hover:bg-white/5"
                   style={{ borderColor: 'rgba(0,229,255,0.06)' }}
                 >
-                  <td className="px-3 py-1.5 truncate max-w-[80px]" style={{ color: entry.scope === 'GLOBAL' ? 'var(--sf-gold)' : undefined }}>
+                  <td className="px-3 py-1.5 truncate" style={{ maxWidth: compact ? '140px' : '80px', color: entry.scope === 'GLOBAL' ? 'var(--sf-gold)' : undefined }}>
                     {entry.scope}
                   </td>
-                  <td className="px-2 py-1.5 truncate max-w-[90px] opacity-70">
+                  <td className="px-2 py-1.5 truncate opacity-70" style={{ maxWidth: compact ? '140px' : '90px' }}>
                     {getEventLabel(entry.event)}
                   </td>
-                  <td className="px-2 py-1.5 truncate max-w-[100px] opacity-60">
-                    {entry.sound.split('/').pop()}
+                  <td className="px-2 py-1.5 truncate opacity-60" style={{ maxWidth: compact ? '160px' : '100px' }}>
+                    <span title={entry.sound}>{entry.sound.split('/').pop()}</span>
+                    {entry.slotTotal > 1 && (
+                      <span className="ml-1 text-[8px] opacity-40" style={{ color: 'var(--sf-cyan)' }}>
+                        1/{entry.slotTotal}
+                      </span>
+                    )}
                   </td>
                   <td className="px-2 py-1.5 text-center">
                     <button
-                      onClick={() => onClear(entry.scope === 'GLOBAL' ? 'global' : entry.scope, entry.event)}
+                      onClick={() => onClear(entry.scope === 'GLOBAL' ? 'global' : entry.scope, entry.event, entry.sound)}
                       className="opacity-40 hover:opacity-80 transition-opacity text-[10px]"
                       style={{ color: 'var(--sf-alert)' }}
+                      title={entry.slotTotal > 1 ? 'Remove this sound' : 'Clear'}
                     >
                       &#x2715;
                     </button>

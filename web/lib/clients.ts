@@ -1,6 +1,6 @@
 import type { HookEvent, SkillHookEvent } from './types';
 
-export type ClientId = 'claude-code' | 'opencode' | 'unknown';
+export type ClientId = 'claude-code' | 'opencode' | 'pi' | 'unknown';
 
 export interface ClientCapabilities {
   id: ClientId;
@@ -72,6 +72,33 @@ export const CLIENTS: Record<ClientId, ClientCapabilities> = {
       PostToolUse: 'Only fires for skill tool calls (tool="skill")',
     },
   },
+  'pi': {
+    id: 'pi',
+    label: 'Pi',
+    supportedEvents: new Set<HookEvent>([
+      'SessionStart', 'SessionEnd', 'Stop',
+      'PreToolUse', 'PostToolUse', 'PostToolUseFailure', 'PreCompact',
+    ]),
+    supportedSkillEvents: new Set<SkillHookEvent>(ALL_SKILL_EVENTS),
+    supportsAgentOverrides: false,
+    eventMapping: {
+      SessionStart: 'session_start / session_switch',
+      SessionEnd: 'session_shutdown',
+      Stop: 'agent_end',
+      PreToolUse: 'tool_call',
+      PostToolUse: 'tool_execution_end',
+      PostToolUseFailure: 'tool_execution_end (isError)',
+      PreCompact: 'session_before_compact',
+    },
+    eventNotes: {
+      SessionStart: 'Fires on session load and /new or /resume',
+      Stop: 'Fires when agent finishes responding to a prompt',
+      SubagentStop: 'No equivalent in pi (build via extensions)',
+      Notification: 'No equivalent in pi',
+      PreToolUse: 'Fires for all tool calls (read, bash, edit, write, custom)',
+      PostToolUse: 'Fires for all tool calls; skill lookup matches custom tool names',
+    },
+  },
   'unknown': {
     id: 'unknown',
     label: 'All Clients',
@@ -101,5 +128,5 @@ export function isEventSupported(clientId: ClientId, event: HookEvent | SkillHoo
 
 /** Get all client IDs (excluding 'unknown') for comparison views */
 export function getAllClientIds(): ClientId[] {
-  return ['claude-code', 'opencode'];
+  return ['claude-code', 'opencode', 'pi'];
 }

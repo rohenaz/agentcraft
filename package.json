@@ -1,13 +1,13 @@
 {
   "name": "agentcraft",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Assign sounds to AI coding agent lifecycle events. CLI for managing sound packs.",
   "license": "MIT",
   "author": "rohenaz",
   "bin": {
     "agentcraft": "./bin/agentcraft.js"
   },
-  "keywords": ["claude-code", "opencode", "sounds", "hooks", "audio", "agents", "ai"],
+  "keywords": ["claude-code", "opencode", "pi", "pi-package", "sounds", "hooks", "audio", "agents", "ai"],
   "repository": {
     "type": "git",
     "url": "https://github.com/rohenaz/agentcraft"
@@ -15,5 +15,8 @@
   "homepage": "https://github.com/rohenaz/agentcraft#readme",
   "engines": {
     "node": ">=18"
+  },
+  "pi": {
+    "extensions": ["./pi-extension.ts"]
   }
 }

@@ -11,14 +11,17 @@ export type HookEvent =
 
 export type SkillHookEvent = 'PreToolUse' | 'PostToolUse';
 
+/** A slot can hold one sound (legacy) or multiple sounds (random pick on trigger). */
+export type SoundSlot = string | string[];
+
 export interface AgentConfig {
   enabled: boolean;
-  hooks: Partial<Record<HookEvent, string>>;
+  hooks: Partial<Record<HookEvent, SoundSlot>>;
 }
 
 export interface SkillConfig {
   enabled: boolean;
-  hooks: Partial<Record<SkillHookEvent, string>>;
+  hooks: Partial<Record<SkillHookEvent, SoundSlot>>;
 }
 
 export type UITheme = string; // Dynamic: derives from installed pack ui/ directory names; 'off' disables UI sounds
@@ -39,7 +42,7 @@ export interface UISlotMap {
 }
 
 export interface SoundAssignments {
-  global: Partial<Record<HookEvent, string>>;
+  global: Partial<Record<HookEvent, SoundSlot>>;
   agents: Record<string, AgentConfig>;
   skills: Record<string, SkillConfig>;
   settings: {

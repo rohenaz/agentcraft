@@ -5,8 +5,8 @@ import { HookSlot } from './hook-slot';
 import { AgentForm } from './agent-form';
 import { PacksPanel } from './packs-panel';
 import { playUISound } from '@/lib/ui-audio';
-import { getEventLabel } from '@/lib/utils';
-import type { HookEvent, SkillHookEvent, SoundAssignments, AgentInfo, SkillInfo, AgentFormData, SelectMode } from '@/lib/types';
+import { getEventLabel, normalizeSlot } from '@/lib/utils';
+import type { HookEvent, SkillHookEvent, SoundAssignments, SoundSlot, AgentInfo, SkillInfo, AgentFormData, SelectMode } from '@/lib/types';
 import type { ClientCapabilities } from '@/lib/clients';
 
 const HOOK_GROUPS: { label: string; events: HookEvent[] }[] = [
@@ -29,7 +29,7 @@ interface AgentRowProps {
   scope: string;
   label: string;
   isGlobal?: boolean;
-  hooks: Partial<Record<HookEvent, string>>;
+  hooks: Partial<Record<HookEvent, SoundSlot>>;
   enabled?: boolean;
   agentInfo?: AgentInfo;
   onToggle?: () => void;
@@ -45,7 +45,7 @@ interface AgentRowProps {
 function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, onPreview, onEdit, onDelete, selectMode, onSlotSelect, client }: AgentRowProps) {
   const [expanded, setExpanded] = useState(!!isGlobal);
   const [isHovered, setIsHovered] = useState(false);
-  const filledCount = Object.values(hooks).filter(Boolean).length;
+  const filledCount = Object.values(hooks).filter((v) => normalizeSlot(v).length > 0).length;
 
   const agentUnsupported = !isGlobal && client && client.id !== 'unknown' && !client.supportsAgentOverrides;
 
@@ -156,7 +156,7 @@ function AgentRow({ scope, label, isGlobal, hooks, enabled, onToggle, onClear, o
 
 interface SkillRowProps {
   skill: SkillInfo;
-  hooks: Partial<Record<SkillHookEvent, string>>;
+  hooks: Partial<Record<SkillHookEvent, SoundSlot>>;
   enabled: boolean;
   onToggle: () => void;
   onClear: (event: SkillHookEvent) => void;
@@ -169,7 +169,7 @@ interface SkillRowProps {
 function SkillRow({ skill, hooks, enabled, onToggle, onClear, onPreview, selectMode, onSlotSelect, client }: SkillRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-  const filledCount = Object.values(hooks).filter(Boolean).length;
+  const filledCount = Object.values(hooks).filter((v) => normalizeSlot(v).length > 0).length;
   const scope = `skill/${skill.qualifiedName}`;
 
   return (

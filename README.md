@@ -2,7 +2,7 @@
 
 Assign sounds to your AI coding agent's lifecycle events. Configure everything through an SC2-inspired dashboard — drag sounds onto hook slots, pick a UI theme, and hear your agents come alive.
 
-Works with **Claude Code** and **OpenCode**.
+Works with **Claude Code**, **OpenCode**, and **Pi**.
 
 ![AgentCraft dashboard](screenshot.jpg)
 
@@ -34,8 +34,30 @@ From then on, Claude Code plays your sounds automatically as it works — no das
 
 ## Install
 
+### Claude Code
+
 ```bash
 claude plugin install agentcraft@rohenaz
+```
+
+### Pi
+
+```bash
+pi install git:github.com/rohenaz/agentcraft
+```
+
+Or copy the extension file manually:
+
+```bash
+cp pi-extension.ts ~/.pi/agent/extensions/agentcraft.ts
+```
+
+Then from any pi session: `/agentcraft` to open the dashboard.
+
+### OpenCode
+
+```bash
+cp opencode.ts ~/.config/opencode/plugins/agentcraft.ts
 ```
 
 ## CLI
@@ -175,7 +197,16 @@ The **UI SFX** dropdown in the header controls ambient sounds that play as you u
 
 ## Managing the Plugin
 
+### Claude Code
+
 ```bash
 claude plugin update agentcraft@rohenaz     # Update to latest
 claude plugin uninstall agentcraft@rohenaz  # Remove
+```
+
+### Pi
+
+```bash
+pi update                                   # Update all packages
+pi remove git:github.com/rohenaz/agentcraft # Remove
 ```

@@ -1,4 +1,16 @@
-import type { SoundAsset } from './types';
+import type { SoundAsset, SoundSlot } from './types';
+
+/** Normalize a SoundSlot (string | string[] | undefined) into a flat string array. */
+export function normalizeSlot(slot: SoundSlot | undefined): string[] {
+  if (!slot) return [];
+  if (Array.isArray(slot)) return slot.filter(Boolean);
+  return slot ? [slot] : [];
+}
+
+/** Pick a random element from a non-empty array. */
+export function pickRandom<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
 
 export function formatSoundName(filename: string): string {
   return filename
