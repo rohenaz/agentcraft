@@ -54,9 +54,12 @@ export async function GET() {
       const internal = relPath.slice(relPath.indexOf(':') + 1);
       const parts = internal.split('/');
       const packId = relPath.slice(0, relPath.indexOf(':'));
+      const packName = packId.split('/')[1] ?? packId;
       const category = parts.length > 2
         ? `${packId}:${parts.slice(0, -2).join('/')}`
-        : `${packId}:${parts[0]}`;
+        : parts.length > 1
+        ? `${packId}:${parts[0]}`
+        : `${packId}:${packName}`;  // root-level files: use pack name as group
       const subcategory = parts.length > 2 ? parts[parts.length - 2] : '';
 
       const waveform = cache[relPath] ?? (() => {

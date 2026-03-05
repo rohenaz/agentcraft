@@ -20,11 +20,21 @@ interface RegistryPack {
   updatedAt: string;
 }
 
+interface SoundshTheme {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  installsCount: number;
+  sounds: Array<{ hookEvent: string; slug: string; audioUrl: string; durationMs: number }>;
+}
+
 type PackAction = 'idle' | 'installing' | 'updating' | 'removing';
 
 export function PacksPanel() {
   const [installed, setInstalled] = useState<PackInfo[]>([]);
   const [registry, setRegistry] = useState<RegistryPack[]>([]);
+  const [soundshThemes, setSoundshThemes] = useState<SoundshTheme[]>([]);
   const [actions, setActions] = useState<Record<string, PackAction>>({});
   const [registryError, setRegistryError] = useState(false);
 
@@ -39,6 +49,10 @@ export function PacksPanel() {
       .then(r => r.json())
       .then(setRegistry)
       .catch(() => setRegistryError(true));
+    fetch('/api/soundsh/themes')
+      .then(r => r.json())
+      .then(setSoundshThemes)
+      .catch(() => {});
   }, [fetchInstalled]);
 
   const setAction = (id: string, action: PackAction) =>
@@ -79,6 +93,39 @@ export function PacksPanel() {
       playUISound('error', 0.5);
     }
     setAction(id, 'idle');
+  };
+
+  const handleSoundshInstall = async (slug: string) => {
+    setAction(`soundsh/${slug}`, 'installing');
+    try {
+      const r = await fetch('/api/soundsh/install', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themeSlug: slug, applyAssignments: true }),
+      });
+      if (!r.ok) throw new Error();
+      playUISound('confirm', 0.5);
+      fetchInstalled();
+    } catch {
+      playUISound('error', 0.5);
+    }
+    setAction(`soundsh/${slug}`, 'idle');
+  };
+
+  const handleSoundshRemove = async (slug: string) => {
+    setAction(`soundsh/${slug}`, 'removing');
+    try {
+      const r = await fetch('/api/soundsh/install', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ themeSlug: slug }),
+      });
+      if (!r.ok) throw new Error();
+      fetchInstalled();
+    } catch {
+      playUISound('error', 0.5);
+    }
+    setAction(`soundsh/${slug}`, 'idle');
   };
 
   const installedIds = new Set(installed.map(p => p.id));
@@ -174,6 +221,49 @@ export function PacksPanel() {
             </div>
           );
         })}
+
+        {/* Sounds.sh Themes */}
+        {soundshThemes.length > 0 && (
+          <>
+            <div className="flex items-center justify-between mt-4 mb-2">
+              <div className="text-[10px] sf-heading font-semibold tracking-widest uppercase" style={{ color: 'var(--sf-cyan)' }}>
+                SOUNDS.SH
+              </div>
+              <span className="text-[9px] opacity-30 tracking-wide">sounds.sh</span>
+            </div>
+
+            {soundshThemes.map(theme => {
+              const key = `soundsh/${theme.slug}`;
+              const action = actions[key] ?? 'idle';
+              const isInstalled = installedIds.has(key);
+              return (
+                <div key={theme.id} className="p-2.5" style={{ border: '1px solid var(--sf-border)', backgroundColor: isInstalled ? 'rgba(0,229,255,0.02)' : undefined }}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="overflow-hidden">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sf-heading font-semibold truncate" style={{ color: 'rgba(255,255,255,0.85)' }}>
+                          {theme.name}
+                        </span>
+                        <span className="text-[9px] opacity-40">{theme.sounds.length} sounds</span>
+                      </div>
+                      <div className="text-[10px] opacity-40">↓ {theme.installsCount.toLocaleString()}</div>
+                      <div className="text-[10px] opacity-50 mt-0.5 line-clamp-2">{theme.description}</div>
+                    </div>
+                    {isInstalled ? (
+                      <button style={btnStyle(false, true)} disabled={action !== 'idle'} onClick={() => handleSoundshRemove(theme.slug)}>
+                        {action === 'removing' ? '···' : 'REMOVE'}
+                      </button>
+                    ) : (
+                      <button style={btnStyle(true)} disabled={action !== 'idle'} onClick={() => handleSoundshInstall(theme.slug)}>
+                        {action === 'installing' ? '···' : 'INSTALL'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </>
+        )}
       </div>
     </div>
   );
