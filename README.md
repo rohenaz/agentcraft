@@ -130,6 +130,12 @@ Add an optional `pack.json` at the root for display metadata:
 }
 ```
 
+### sounds.sh Themes
+
+[sounds.sh](https://www.sounds.sh) is a curated sound library built for Claude Code. AgentCraft integrates it directly — open the **PACKS** tab and scroll to the **SOUNDS.SH** section to browse and install any of its themed packs (Minecraft, Age of Empires 2, The Sims, Resident Evil, and more).
+
+Installing a sounds.sh theme downloads the MP3s locally and wires up hook assignments automatically. No account or API key needed.
+
 ### Creating a Pack
 
 **Fastest path — scaffold with the CLI:**
