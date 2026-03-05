@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readdir, stat, readFile } from 'fs/promises';
+import { readdir, stat, readFile, writeFile } from 'fs/promises';
 import { join } from 'path';
-import { homedir } from 'os';
 import { spawnSync } from 'child_process';
-
-const PACKS_DIR = join(homedir(), '.agentcraft', 'packs');
+import { PACKS_DIR, ASSIGNMENTS_PATH } from '@/lib/packs';
 
 interface PackInfo {
   id: string;          // "publisher/name"
@@ -36,6 +34,8 @@ async function getInstalledPacks(): Promise<PackInfo[]> {
       let version: string | undefined;
       try {
         const manifest = JSON.parse(await readFile(join(packPath, 'pack.json'), 'utf-8'));
+        // soundsh packs are managed by /api/soundsh — exclude them from the git-pack list
+        if (manifest.source === 'soundsh') continue;
         description = manifest.description;
         version = manifest.version;
       } catch { /* no manifest, that's fine */ }
@@ -83,6 +83,19 @@ export async function DELETE(req: NextRequest) {
     const [publisher, name] = repo.split('/');
     const dest = join(PACKS_DIR, publisher, name);
     spawnSync('rm', ['-rf', dest]);
+    // Clean stale assignments pointing at this pack
+    try {
+      const raw = JSON.parse(await readFile(ASSIGNMENTS_PATH, 'utf-8'));
+      const prefix = `${publisher}/${name}:`;
+      let changed = false;
+      for (const [event, value] of Object.entries(raw.global ?? {})) {
+        if (typeof value === 'string' && value.startsWith(prefix)) {
+          delete raw.global[event];
+          changed = true;
+        }
+      }
+      if (changed) await writeFile(ASSIGNMENTS_PATH, JSON.stringify(raw, null, 2));
+    } catch { /* assignments file missing or malformed — ignore */ }
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ error: 'Remove failed' }, { status: 500 });
@@ -98,6 +111,11 @@ export async function PATCH(req: NextRequest) {
     }
     const [publisher, name] = repo.split('/');
     const dest = join(PACKS_DIR, publisher, name);
+    // Guard: refuse to git-pull on non-git directories (e.g. soundsh packs)
+    const gitCheck = spawnSync('git', ['-C', dest, 'rev-parse', '--git-dir'], { timeout: 5000 });
+    if (gitCheck.status !== 0) {
+      return NextResponse.json({ error: 'Not a git repository' }, { status: 400 });
+    }
     const result = spawnSync('git', ['-C', dest, 'pull'], { timeout: 30000 });
     if (result.status !== 0) {
       return NextResponse.json({ error: 'Update failed' }, { status: 500 });

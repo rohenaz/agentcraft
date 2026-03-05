@@ -84,28 +84,32 @@ export async function POST(req: NextRequest) {
     const packDir = join(PACKS_DIR, 'soundsh', themeSlug)
     await mkdir(packDir, { recursive: true })
 
-    // Download each sound file
+    // Download each sound file — clean up partial dir on any failure
     const hookAssignments: Record<string, string> = {}
 
-    for (const sound of theme.sounds) {
-      const filename = filenameFromSlug(sound.slug)
-      const dest = join(packDir, filename)
+    try {
+      for (const sound of theme.sounds) {
+        const filename = filenameFromSlug(sound.slug)
+        const dest = join(packDir, filename)
 
-      const audioRes = await fetch(sound.audioUrl)
-      if (!audioRes.ok) {
-        return NextResponse.json(
-          { error: `Failed to download sound: ${sound.slug}` },
-          { status: 502 }
-        )
-      }
-      const buf = await audioRes.arrayBuffer()
-      await writeFile(dest, Buffer.from(buf))
+        const audioRes = await fetch(sound.audioUrl)
+        if (!audioRes.ok) throw new Error(`Failed to download sound: ${sound.slug}`)
+        const buf = await audioRes.arrayBuffer()
+        await writeFile(dest, Buffer.from(buf))
 
-      const normalizedEvent = normalizeHookEvent(sound.hookEvent)
-      // Only set Stop if not already assigned (TaskCompleted maps to Stop)
-      if (!(normalizedEvent in hookAssignments)) {
-        hookAssignments[normalizedEvent] = filename
+        const normalizedEvent = normalizeHookEvent(sound.hookEvent)
+        // Only set Stop if not already assigned (TaskCompleted maps to Stop)
+        if (!(normalizedEvent in hookAssignments)) {
+          // Store as full assignment path for consistency
+          hookAssignments[normalizedEvent] = `soundsh/${themeSlug}:${filename}`
+        }
       }
+    } catch (err) {
+      spawnSync('rm', ['-rf', packDir])
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : 'Download failed' },
+        { status: 502 }
+      )
     }
 
     // Write pack.json
@@ -123,8 +127,8 @@ export async function POST(req: NextRequest) {
     // Optionally apply assignments globally
     if (applyAssignments) {
       const assignments = await readAssignments()
-      for (const [hookEvent, filename] of Object.entries(hookAssignments)) {
-        assignments.global[hookEvent] = `soundsh/${themeSlug}:${filename}`
+      for (const [hookEvent, path] of Object.entries(hookAssignments)) {
+        assignments.global[hookEvent] = path
       }
       await writeFile(ASSIGNMENTS_PATH, JSON.stringify(assignments, null, 2))
     }
