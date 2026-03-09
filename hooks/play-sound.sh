@@ -97,12 +97,12 @@ fi
 [ ! -f "$FULL" ] && exit 0
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
-  afplay -v "$VOLUME" "$FULL" &
+  (afplay -v "$VOLUME" "$FULL" &>/dev/null &)
 elif command -v paplay &>/dev/null; then
   VOLUME_PAPLAY=$(awk "BEGIN{printf \"%d\", $VOLUME * 65536}")
-  paplay --volume="$VOLUME_PAPLAY" "$FULL" &
+  (paplay --volume="$VOLUME_PAPLAY" "$FULL" &>/dev/null &)
 elif command -v aplay &>/dev/null; then
-  aplay "$FULL" &
+  (aplay "$FULL" &>/dev/null &)
 fi
 
 exit 0
